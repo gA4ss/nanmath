@@ -149,6 +149,8 @@ namespace nanmath {
     /* 保证这个值小于DIGIT_BIT的一半 
      * 如果除数的最高digit所占用的实际位数小于精度-1，换句话说就是
      * 最高digit的值小于精度全值的一半
+     *
+     * 让除数最高为补满一个digit
      */
     if (norm < (int)(DIGIT_BIT-1)) {
       norm = (DIGIT_BIT-1) - norm;              /* 余数其余的位 */
