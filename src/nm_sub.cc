@@ -1,7 +1,7 @@
 #include "nanmath.h"
 
 namespace nanmath {
-  int nm_int::sub_d(nm_digit b) {
+  int nanmath_int::sub_d(nm_digit b) {
     nm_digit *tmpa, mu;
     int res, ix;
     
@@ -58,7 +58,7 @@ namespace nanmath {
     return NM_OK;
   }
   
-  int nm_int::sub(nm_int &b) {
+  int nanmath_int::sub(nanmath_int &b) {
     int res;
     int sa = _sign;
     int sb = b.get_sign();
@@ -76,14 +76,14 @@ namespace nanmath {
     return res;
   }
   
-  int nm_int::sub(nm_int &a, nm_int &b) {
+  int nanmath_int::sub(nanmath_int &a, nanmath_int &b) {
     if (copy(a) != NM_OK)
       return _lasterr;
     return sub(b);
   }
   
   /* (指定 |a| > |b|), HAC pp.595 Algorithm 14.9 */
-  int nm_int::s_sub(nm_int &b) {
+  int nanmath_int::s_sub(nanmath_int &b) {
     int min = b.get_used();
     int max = _used;
     
@@ -109,13 +109,13 @@ namespace nanmath {
     return NM_OK;
   }
 
-  int nm_int::s_sub(nm_int &a, nm_int &b) {
+  int nanmath_int::s_sub(nanmath_int &a, nanmath_int &b) {
     if (copy(a) != NM_OK)
       return _lasterr;
     return s_sub(b);
   }
   
-  int nm_int::s_sub(nm_int &a, nm_int &b, nm_int &c) {
+  int nanmath_int::s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
     int min = b.get_used();
     int max = a.get_used();
     

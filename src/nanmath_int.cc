@@ -2,8 +2,11 @@
 
 namespace nanmath {
 
+  /* 定义空值 */
+  nanmath_int nnull;
+  
   /* 初始化 */
-  void nm_int::init() {
+  void nanmath_int::init() {
     _dp = cast(nm_digit, nm_malloc(sizeof(nm_digit) * NM_PREC));
     if (_dp == NULL) {
       _lasterr = NM_MEM;
@@ -24,22 +27,22 @@ namespace nanmath {
     _karatsuba_sqr_threshold = 120;
   }
   
-  nm_int::nm_int() {
+  nanmath_int::nanmath_int() {
     init();
     return;
   }
   
-  nm_int::nm_int(nm_digit v) {
+  nanmath_int::nanmath_int(nm_digit v) {
     init();
     set(v);
   }
   
-  nm_int::nm_int(nm_int &v) {
+  nanmath_int::nanmath_int(nanmath_int &v) {
     init();
     v.paste(*this);
   }
   
-  nm_int::~nm_int() {
+  nanmath_int::~nanmath_int() {
     clear();
   }
 }

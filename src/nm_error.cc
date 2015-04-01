@@ -11,7 +11,7 @@ namespace nanmath {
     { NM_VAL, "Value out of range" }
   };
   
-  const char * const nm_int::error_to_string(int code) {
+  const char * const nanmath_int::error_to_string(int code) {
     int x;
     for (x = 0; x < (int)(sizeof(msgs) / sizeof(msgs[0])); x++) {
       if (msgs[x].code == code) {
@@ -19,5 +19,13 @@ namespace nanmath {
       }
     }
     return "Invalid error code";
+  }
+  
+  int nanmath_int::get_lasterr() {
+    return _lasterr;
+  }
+  
+  void nanmath_int::set_lasterr(int err) {
+    _lasterr = err;
   }
 }

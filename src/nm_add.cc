@@ -2,7 +2,7 @@
 
 namespace nanmath {
   
-  int nm_int::add_d(nm_digit b) {
+  int nanmath_int::add_d(nm_digit b) {
     int res, ix, oldused;
     nm_digit *tmp, mu;
     nm_word x;
@@ -69,7 +69,7 @@ namespace nanmath {
     return NM_OK;
   }
 
-  int nm_int::add(nm_int &b) {
+  int nanmath_int::add(nanmath_int &b) {
     int res = NM_OK;
 
     /* 获取标志 */
@@ -90,15 +90,15 @@ namespace nanmath {
     return res;
   }
   
-  int nm_int::add(nm_int &a, nm_int &b) {
+  int nanmath_int::add(nanmath_int &a, nanmath_int &b) {
     if (copy(a) != NM_OK)
       return _lasterr;
     return add(b);
   }
   
   /* 辅助算法, 依赖 HAC pp.594, Algorithm 14.7 */
-  int nm_int::s_add(nm_int &b) {
-    nm_int *x;
+  int nanmath_int::s_add(nanmath_int &b) {
+    nanmath_int *x;
     int olduse, min, max;
     
     /* 求出位数大的那一个，并且让x指向它 */
@@ -151,14 +151,14 @@ namespace nanmath {
     return NM_OK;
   }
   
-  int nm_int::s_add(nm_int &a, nm_int &b) {
+  int nanmath_int::s_add(nanmath_int &a, nanmath_int &b) {
     if (copy(a) != NM_OK)
       return _lasterr;
     return s_add(b);
   }
  
-  int nm_int::s_add(nm_int &a, nm_int &b, nm_int &c) {
-    nm_int *x;
+  int nanmath_int::s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
+    nanmath_int *x;
     int olduse, min, max;
     
     /* 求出位数大的那一个，并且让x指向它 */

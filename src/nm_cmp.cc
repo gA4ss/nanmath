@@ -1,7 +1,7 @@
 #include "nanmath.h"
 
 namespace nanmath {
-  int nm_int::cmp(nm_int &b) {
+  int nanmath_int::cmp(nanmath_int &b) {
     if (_sign != b.get_sign()) {
       if (_sign == NM_NEG) {
         return NM_LT;
@@ -17,7 +17,7 @@ namespace nanmath {
     }
   }
   
-  int nm_int::cmp_d(nm_digit b) {
+  int nanmath_int::cmp_d(nm_digit b) {
     if (_sign == NM_NEG) {
       return NM_LT;
     }
@@ -35,7 +35,7 @@ namespace nanmath {
     }
   }
   
-  int nm_int::cmp_mag (nm_int &a, nm_int &b) {
+  int nanmath_int::cmp_mag (nanmath_int &a, nanmath_int &b) {
     if (a.get_used() > b.get_used()) {
       return NM_GT;
     }

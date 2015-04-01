@@ -2,7 +2,7 @@
 
 namespace nanmath {
   /* 乘以2 */
-  int nm_int::mul_2() {
+  int nanmath_int::mul_2() {
     /* 为了防止溢出增加一位 */
     if (grow(_used + 1) != NM_OK) {
       return _lasterr;
@@ -38,18 +38,13 @@ namespace nanmath {
   }
   
   /* 乘以一个单精度位 */
-  int nm_int::mul_d(nm_digit b) {
+  int nanmath_int::mul_d(nm_digit b) {
     /* 确定有足够空间存放 a * b */
     if (_alloc < _used + 1) {
       if (grow(_used + 1) != NM_OK) {
         return _lasterr;
       }
     }
-    
-    /* 当_used为0时做保证，尤其是与set_s配合
-     * 如果多了，则最后末尾的clamp做缩减
-     */
-    _used++;
     
     nm_digit *tmp = _dp;
     nm_digit u = 0;    /* 进位 */
@@ -65,15 +60,18 @@ namespace nanmath {
     }
     
     /* 设置最后的进位  */
-    *tmp++ = u;
-    ++i;
+    if (u) {
+      *tmp++ = u;
+      ++i;
+    }
     
+    _used++;
     clamp();
     
     return NM_OK;
   }
     
-  int nm_int::mul(nm_int &b) {
+  int nanmath_int::mul(nanmath_int &b) {
     int res = NM_OK;
     int neg = (_sign == b.get_sign()) ? NM_ZPOS : NM_NEG;
     
@@ -100,7 +98,7 @@ namespace nanmath {
     return res;
   }
   
-  int nm_int::mul(nm_int &a, nm_int &b) {
+  int nanmath_int::mul(nanmath_int &a, nanmath_int &b) {
     if (copy(a) != NM_OK)
       return _lasterr;
     return mul(b);
@@ -132,8 +130,8 @@ namespace nanmath {
    * z1 = (x1 + x0) * (y1 + y0) - x1 * y1 - x0 * y0，
    * 故x0 * y0 便可以由加减法得到。
    */
-  int nm_int::karatsuba_mul(nm_int &b) {
-    nm_int x0, x1, y0, y1, t1, x0y0, x1y1, c;
+  int nanmath_int::karatsuba_mul(nanmath_int &b) {
+    nanmath_int x0, x1, y0, y1, t1, x0y0, x1y1, c;
     int B, b_used;
     
     b_used = b.get_used();
@@ -238,8 +236,8 @@ namespace nanmath {
   }
   
   /* 计算|a| * |b|并且只计算到digits位 */
-  int nm_int::s_mul_digs(nm_int &a, nm_int &b, nm_int &c, int digs) {
-    nm_int t;
+  int nanmath_int::s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
+    nanmath_int t;
     int pa, pb, ix, iy;
     nm_digit u;
     nm_word r;
@@ -290,8 +288,8 @@ namespace nanmath {
     return NM_OK;
   }
 
-  int nm_int::s_mul_high_digs(nm_int &a, nm_int &b, nm_int &c, int digs) {
-    nm_int t;
+  int nanmath_int::s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
+    nanmath_int t;
     int pa, pb, ix, iy;
     nm_digit u;
     nm_word r;
@@ -332,7 +330,7 @@ namespace nanmath {
   }
   
   /* Based on Algorithm 14.12 on pp.595 of HAC. */
-  int nm_int::s_mul_digs_(nm_int &a, nm_int &b, nm_int &c, int digs) {
+  int nanmath_int::s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     int ix, iz;
     nm_digit W[NM_WARRAY];        /* 存放最终结果 */
     
@@ -398,7 +396,7 @@ namespace nanmath {
   }
 
   /* 直接从digs位相乘 */
-  int nm_int::s_mul_high_digs_(nm_int &a, nm_int &b, nm_int &c, int digs) {
+  int nanmath_int::s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     int ix, iz;
     nm_digit W[NM_WARRAY];
     

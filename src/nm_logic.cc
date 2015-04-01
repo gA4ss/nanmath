@@ -3,7 +3,7 @@
 namespace nanmath {
   
   /* 向左移动2进制b位 */
-  int nm_int::lsh(nm_size b) {
+  int nanmath_int::lsh(nm_size b) {
     if (b <= 0) {
       return NM_OK;
     }
@@ -53,7 +53,7 @@ namespace nanmath {
     return NM_OK;
   }
   
-  int nm_int::rsh(nm_size b) {
+  int nanmath_int::rsh(nm_size b) {
     /* 不用移动 */
     if (b <= 0)
       return NM_OK;
@@ -101,7 +101,7 @@ namespace nanmath {
   }
   
   /* 左移精度b位 */
-  int nm_int::lsh_d(nm_size b) {
+  int nanmath_int::lsh_d(nm_size b) {
     if (b <= 0) {
       return NM_OK;
     }
@@ -131,7 +131,7 @@ namespace nanmath {
   }
   
   /* 右移b位 */
-  int nm_int::rsh_d(nm_size b) {
+  int nanmath_int::rsh_d(nm_size b) {
     if (b <= 0)
       return NM_OK;
     
@@ -160,6 +160,23 @@ namespace nanmath {
     _used -= b;
     
     return NM_OK;
+  }
+  
+  int nanmath_int::count_bits() {
+    if (_used == 0) {
+      return 0;
+    }
+
+    /* 计算除最高digit的位总和 */
+    int r = (_used - 1) * DIGIT_BIT;
+    /* 最高digit的位 + fffff ... */
+    /* 加上最高digit的位 */
+    nm_digit q = _dp[_used - 1];
+    while (q > ((nm_digit)0)) {
+      ++r;
+      q >>= ((nm_digit)1);
+    }
+    return r;
   }
   
 }

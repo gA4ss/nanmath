@@ -112,16 +112,16 @@ namespace nanmath {
   typedef int nm_prime_callback(unsigned char *dst, int len, void *dat);
   
   /* 定义多精度整型 */
-  class nm_int {
+  class nanmath_int {
   public:
     /*
      * 初始化函数
      * nm_construct.cc
      */
-    nm_int();
-    nm_int(nm_digit v);
-    nm_int(nm_int &v);
-    virtual ~nm_int();
+    nanmath_int();
+    nanmath_int(nm_digit v);
+    nanmath_int(nanmath_int &v);
+    virtual ~nanmath_int();
     
   protected:
     virtual void init();
@@ -157,26 +157,32 @@ namespace nanmath {
      * nm_error.cc
      */
     const char * const error_to_string(int code);  /* 错误消息转换 */
+    int get_lasterr();
+    void set_lasterr(int err);
     
   public:
     /* 
      * 外部功能接口
      * nm_tools.cc
      */
+    virtual nm_digit getv(int index);               /* 获取索引对应的值,如果是-1则出错 */
+    virtual nm_digit *getp(int index);              /* 获取索引对应的值的指针,如果是NULL则出错 */
     virtual char *result(int radix);                /* 打印结果,由外部释放 */
     virtual void clamp();                           /* 缩减无用位 */
+    virtual void spread();                          /* 保证值对应位 */
     virtual void set(nm_digit v);                   /* 设置单精度位 */
     virtual int set_s(const char *str);             /* 使用字符串进行设置 */
     virtual int set_s(const char *str, int radix);  /* 按照radix给定的基,来设定数字 */
-    virtual int copy(nm_int &d);                    /* 从d中拷贝到自身中 */
-    virtual int paste(nm_int &d);                   /* 将自身的值黏贴到d中 */
+    virtual int copy(nanmath_int &d);                    /* 从d中拷贝到自身中 */
+    virtual int paste(nanmath_int &d);                   /* 将自身的值黏贴到d中 */
     virtual int grow(nm_size size);                 /* 重新分配内存到size */
     virtual int allocs(int size);                   /* 按照尺寸分配内存 */
     virtual int resize(int size);                   /* 清除原有内存，并分配内存 */
     virtual int shrink();                           /* 使用位与分配位相同 */
-    virtual int exch(nm_int &b);                    /* 交换自身与b数值 */
-    virtual int exch(nm_int &a, nm_int &b);         /* 交换a与b数值 */
+    virtual int exch(nanmath_int &b);                    /* 交换自身与b数值 */
+    virtual int exch(nanmath_int &a, nanmath_int &b);         /* 交换a与b数值 */
     virtual void clear();
+    virtual int testnull();
   
   public:
     /*
@@ -190,16 +196,16 @@ namespace nanmath {
      * nm_add.cc
      */
     virtual int add_d(nm_digit b);
-    virtual int add(nm_int &b);
-    virtual int add(nm_int &a, nm_int &b);
+    virtual int add(nanmath_int &b);
+    virtual int add(nanmath_int &a, nanmath_int &b);
     
     /*
      * 减法单元
      * nm_sub.cc
      */
     virtual int sub_d(nm_digit b);
-    virtual int sub(nm_int &b);
-    virtual int sub(nm_int &a, nm_int &b);
+    virtual int sub(nanmath_int &b);
+    virtual int sub(nanmath_int &a, nanmath_int &b);
     
     /*
      * 乘法单元
@@ -207,8 +213,8 @@ namespace nanmath {
      */
     virtual int mul_2();
     virtual int mul_d(nm_digit b);
-    virtual int mul(nm_int &b);
-    virtual int mul(nm_int &a, nm_int &b);
+    virtual int mul(nanmath_int &b);
+    virtual int mul(nanmath_int &a, nanmath_int &b);
     
     /*
      * 除法单元
@@ -216,8 +222,9 @@ namespace nanmath {
      */
     virtual int div_2();
     virtual int div_d(nm_digit v);
-    virtual int div(nm_int &v);
-    virtual int div(nm_int &a, nm_int &b);
+    virtual int div_d(nm_digit v, nanmath_int& r);
+    virtual int div(nanmath_int &v, nanmath_int& r);
+    virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int& r);
     
     /*
      * 取模单元
@@ -231,6 +238,7 @@ namespace nanmath {
     virtual int rsh(nm_size b);
     virtual int lsh_d(nm_size b);
     virtual int rsh_d(nm_size b);
+    virtual int count_bits();                 /* 计算总共用了多少位,最高位是多少 */
     
     /*
      * 指数运算
@@ -249,9 +257,9 @@ namespace nanmath {
      * 比较运算
      * nm_cmp.cc
      */
-    virtual int cmp(nm_int &b);
+    virtual int cmp(nanmath_int &b);
     virtual int cmp_d(nm_digit b);
-    virtual int cmp_mag (nm_int &a, nm_int &b);
+    virtual int cmp_mag(nanmath_int &a, nanmath_int &b);
     
     /*
      * 数学辅助
@@ -267,19 +275,19 @@ namespace nanmath {
      * 一些支持运算的底层算法
      */
   protected:
-    int s_add(nm_int &b);
-    int s_add(nm_int &a, nm_int &b);
-    int s_add(nm_int &a, nm_int &b, nm_int &c);
+    int s_add(nanmath_int &b);
+    int s_add(nanmath_int &a, nanmath_int &b);
+    int s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
-    int s_sub(nm_int &b);             /* |a| > |b| */
-    int s_sub(nm_int &a, nm_int &b);
-    int s_sub(nm_int &a, nm_int &b, nm_int &c);
+    int s_sub(nanmath_int &b);             /* |a| > |b| */
+    int s_sub(nanmath_int &a, nanmath_int &b);
+    int s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
-    int karatsuba_mul(nm_int &b);
-    int s_mul_digs(nm_int &a, nm_int &b, nm_int &c, int digs);
-    int s_mul_high_digs(nm_int &a, nm_int &b, nm_int &c, int digs);
-    int s_mul_digs_(nm_int &a, nm_int &b, nm_int &c, int digs);
-    int s_mul_high_digs_(nm_int &a, nm_int &b, nm_int &c, int digs);
+    int karatsuba_mul(nanmath_int &b);
+    int s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     
     /*
      * 数据定义区域
@@ -301,6 +309,21 @@ namespace nanmath {
     int _sign;        /* 标志位 */
     nm_digit *_dp;		/* 队列 */
   };
+  
+  /* 一个空值 */
+  extern nanmath_int nnull;
+  
+#if 0
+  /* 实现操作符号重载 */
+  class nm_int : public nanmath_int {
+  public:
+    nm_int();
+    nm_int(nm_digit v);
+    nm_int(nm_int &v);
+    virtual ~nm_int();
+  };
+#endif
+  
 }
 
 #endif

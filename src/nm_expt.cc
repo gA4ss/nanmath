@@ -3,9 +3,9 @@
 namespace nanmath {
 
 #if 0
-  int nm_int::expt_d(nm_digit b) {
+  int nanmath_int::expt_d(nm_digit b) {
     int res;
-    nm_int g;
+    nanmath_int g;
     
     if (g.copy(b) != NM_OK) {
       return _lasterr;
