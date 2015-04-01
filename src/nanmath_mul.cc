@@ -67,7 +67,6 @@ namespace nanmath {
     
     _used++;
     clamp();
-    
     return NM_OK;
   }
     
@@ -89,8 +88,9 @@ namespace nanmath {
           MIN(_used, b.get_used()) <=
           (1 << ((CHAR_BIT * sizeof(nm_word)) - (2 * DIGIT_BIT)))) {
         res = s_mul_digs(*this, b, *this, digs);
-      } else {}
-        //res = s_mp_mul (a, b, c);
+      } else {
+        res = s_mul_digs(*this, b, *this, _used + b.get_used() + 1);
+      }
     }
     
     /* 符号 */

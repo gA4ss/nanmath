@@ -40,25 +40,25 @@ namespace nanmath {
     return NM_OK;
   }
   
-  int nanmath_int::div_d(nm_digit v, nanmath_int &r) {
+  int nanmath_int::div_d(nm_digit v, nm_digit *r) {
     /* 除数不能为0 */
     if (v == 0) {
-      return NM_VAL;
+      return set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
     }
     
     /* 除数是1，被除数是0 */
     if (v == 1 || iszero()) {
-      if (r.testnull() == 0) r.zero();
+      if (r) *r = 0;
       return NM_OK;
     }
     
     int ix;
     /* v是2的次方,相当于左移动n位 */
     if (is_power_of_two(v, &ix) == 1) {
-      if (r.testnull() == 0) {
+      if (r) {
         /* 求余数,掩码不为0的部分 */
         nm_digit rem = _dp[0] & ((((nm_digit)1)<<ix) - 1);
-        r.set(rem);
+        *r = rem;
       }
       
       return rsh(ix);
@@ -90,19 +90,13 @@ namespace nanmath {
     }
     
     /* 最后是余数 */
-    if (r.testnull() == 0) {
-      r.set((nm_digit)w);
+    if (r) {
+      *r = cast_f(nm_digit, w);
     }
     
     q.clamp();
     copy(q);
-    
     return NM_OK;
-  }
-  
-  int nanmath_int::div_d(nm_digit v) {
-    nanmath_int r;
-    return div_d(v, r);
   }
   
   /*
@@ -112,7 +106,7 @@ namespace nanmath {
   int nanmath_int::div(nanmath_int &v, nanmath_int &r) {
     /* 除数为0 */
     if (v.iszero()) {
-      return NM_VAL;
+      return set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
     }
     
     /* 如果被除数小于除数,则商为0,余数等于被除数 */
@@ -152,17 +146,20 @@ namespace nanmath {
     
     /* 标准化x,y, 确保 y >= v/2, [v == 2^DIGIT_BIT] */
     int norm = y.count_bits() % DIGIT_BIT;      /* 一个模上DIGIT_BIT循环系统的数值 */
-    /* 保证这个值小于DIGIT_BIT的一半 */
+    /* 保证这个值小于DIGIT_BIT的一半 
+     * 如果除数的最高digit所占用的实际位数小于精度-1，换句话说就是
+     * 最高digit的值小于精度全值的一半
+     */
     if (norm < (int)(DIGIT_BIT-1)) {
       norm = (DIGIT_BIT-1) - norm;              /* 余数其余的位 */
       
       /* 被除数标准化 */
-      if (x.mul_d(norm) != NM_OK) {
+      if (x.lsh(norm) != NM_OK) {
         return _lasterr;
       }
       
       /* 除数标准化 */
-      if (y.mul_d(norm) != NM_OK) {
+      if (y.lsh(norm) != NM_OK) {
         return _lasterr;
       }
     } else {
@@ -172,7 +169,9 @@ namespace nanmath {
     int n = x.get_used() - 1;           /* 被除数最高位 */
     int t = y.get_used() - 1;           /* 除数最高位 */
     
-    /* 将 除数的位数 设定到 被除数 相等的位置 */
+    /* 将 除数的位数 设定到 被除数 相等的位置 
+     * 高位先做除法
+     */
     if (y.lsh_d(n - t) != NM_OK) {
       return _lasterr;
     }
@@ -181,6 +180,9 @@ namespace nanmath {
      * 这里就是做正规的除法
      */
     while (x.cmp(y) != NM_LT) {
+      /* 商的位置是在被除数与除数的位数相差的地方开始
+       * 想想列竖式
+       */
       ++(*q.getp(n - t));
       if (x.sub(y) != NM_OK) {
         return _lasterr;
@@ -209,7 +211,7 @@ namespace nanmath {
         continue;
       }
       
-      if (x.getv(i) == y.getv(i)) {
+      if (x.getv(i) == y.getv(t)) {
         /* 如果当前经过减法过后的x与y的某位相等 
          * 商对应的位全满
          */
@@ -235,9 +237,9 @@ namespace nanmath {
          * 然后，索引1digit设置为除数的0位
          */
         t1.zero();
+        t1.set_used(2);
         (*t1.getp(0)) = (t - 1 < 0) ? 0 : y.getv(t - 1);
         (*t1.getp(1)) = y.getv(t);
-        t1.set_used(2);
         
         /* 这里计算t1 */
         if (t1.mul_d(q.getv(i - t - 1)) != NM_OK) {
@@ -245,10 +247,10 @@ namespace nanmath {
         }
         
         /* t2最多取当前被除数的高三位，如果不够则移动 */
+        t2.set_used(3);
         (*t2.getp(0)) = (i - 2 < 0) ? 0 : x.getv(i - 2);
         (*t2.getp(1)) = (i - 1 < 0) ? 0 : x.getv(i - 1);
         (*t2.getp(2)) = x.getv(i);
-        t2.set_used(3);
       } while (cmp_mag(t1, t2) == NM_GT); /* while (t1 > t2) 
                                            * 保证被除数大于除数
                                            */
@@ -307,7 +309,6 @@ namespace nanmath {
       x.div_d(norm);
       r.copy(x);
     }
-    
     return NM_OK;
   }
   

@@ -1,4 +1,5 @@
 #include "nanmath.h"
+#include <string.h>
 
 namespace nanmath {
 
@@ -9,7 +10,7 @@ namespace nanmath {
   void nanmath_int::init() {
     _dp = cast(nm_digit, nm_malloc(sizeof(nm_digit) * NM_PREC));
     if (_dp == NULL) {
-      _lasterr = NM_MEM;
+      set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return;
     }
     
@@ -17,10 +18,11 @@ namespace nanmath {
       _dp[i] = 0;
     }
     
-    _used = 0;
+    _used = 1;
     _alloc = NM_PREC;
     _sign = NM_ZPOS;
     _lasterr = NM_OK;
+    memset(_funcname, 0, MAX_BUFF_SIZE);
     
     /* 设定karatsuba算法的阀值 */
     _karatsuba_mul_threshold = 80;

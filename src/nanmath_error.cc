@@ -1,4 +1,5 @@
 #include "nanmath.h"
+#include <string.h>
 
 namespace nanmath {
 
@@ -25,7 +26,18 @@ namespace nanmath {
     return _lasterr;
   }
   
-  void nanmath_int::set_lasterr(int err) {
+  char *nanmath_int::get_lasterr_func() {
+    return _funcname;
+  }
+  
+  void nanmath_int::rsle() {
+    _lasterr = NM_OK;
+    memset(_funcname, 0, MAX_BUFF_SIZE);
+  }
+  
+  int nanmath_int::set_lasterr(int err, char *fn) {
     _lasterr = err;
+    strcpy(_funcname, fn);
+    return err;
   }
 }

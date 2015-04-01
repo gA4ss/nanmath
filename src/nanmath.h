@@ -107,7 +107,15 @@ typedef nm_word               nm_size;
 
 #define NM_WARRAY               (1 << (sizeof(nm_word) * CHAR_BIT - 2 * DIGIT_BIT + 1))
 
+#ifndef MAX_BUFF_SIZE
+#define MAX_BUFF_SIZE 256
+#endif
+
 namespace nanmath {
+  
+  /* 一个空值 */
+  class nanmath_int;
+  extern nanmath_int nnull;
   
   typedef int nm_prime_callback(unsigned char *dst, int len, void *dat);
   
@@ -157,32 +165,36 @@ namespace nanmath {
      * nm_error.cc
      */
     const char * const error_to_string(int code);  /* 错误消息转换 */
+    void rsle();
     int get_lasterr();
-    void set_lasterr(int err);
+    char *get_lasterr_func();
+    int set_lasterr(int err, char *fn);
     
   public:
     /* 
      * 外部功能接口
      * nm_tools.cc
      */
-    virtual nm_digit getv(int index);               /* 获取索引对应的值,如果是-1则出错 */
-    virtual nm_digit *getp(int index);              /* 获取索引对应的值的指针,如果是NULL则出错 */
-    virtual char *result(int radix);                /* 打印结果,由外部释放 */
-    virtual void clamp();                           /* 缩减无用位 */
-    virtual void spread();                          /* 保证值对应位 */
-    virtual void set(nm_digit v);                   /* 设置单精度位 */
-    virtual int set_s(const char *str);             /* 使用字符串进行设置 */
-    virtual int set_s(const char *str, int radix);  /* 按照radix给定的基,来设定数字 */
-    virtual int copy(nanmath_int &d);                    /* 从d中拷贝到自身中 */
-    virtual int paste(nanmath_int &d);                   /* 将自身的值黏贴到d中 */
-    virtual int grow(nm_size size);                 /* 重新分配内存到size */
-    virtual int allocs(int size);                   /* 按照尺寸分配内存 */
-    virtual int resize(int size);                   /* 清除原有内存，并分配内存 */
-    virtual int shrink();                           /* 使用位与分配位相同 */
-    virtual int exch(nanmath_int &b);                    /* 交换自身与b数值 */
-    virtual int exch(nanmath_int &a, nanmath_int &b);         /* 交换a与b数值 */
-    virtual void clear();
-    virtual int testnull();
+    virtual nm_digit getv(int index);                     /* 获取索引对应的值,如果是-1则出错 */
+    virtual nm_digit *getp(int index);                    /* 获取索引对应的值的指针,如果是NULL则出错 */
+    virtual char *result(int radix=10);                   /* 打印结果,由外部释放 */
+    virtual void clamp();                                 /* 缩减无用位 */
+    virtual void spread();                                /* 保证值对应位 */
+    virtual void set(nm_digit v);                         /* 设置单精度位 */
+    virtual int set_s(const char *str, int radix=10);     /* 按照radix给定的基,来设定数字 */
+    virtual int copy(nanmath_int &d);                     /* 从d中拷贝到自身中 */
+    virtual int paste(nanmath_int &d);                    /* 将自身的值黏贴到d中 */
+    virtual int grow(nm_size size);                       /* 重新分配内存到size */
+    virtual int allocs(int size);                         /* 按照尺寸分配内存 */
+    virtual int resize(int size);                         /* 清除原有内存，并分配内存 */
+    virtual int shrink();                                 /* 使用位与分配位相同 */
+    virtual int exch(nanmath_int &b);                     /* 交换自身与b数值 */
+    virtual int exch(nanmath_int &a, nanmath_int &b);     /* 交换a与b数值 */
+    virtual void clear();                                 /* 清除内存 */
+    virtual int testnull();                               /* 测试是否为空 */
+    
+  protected:
+    void reverse_mem(unsigned char *s, int len);
   
   public:
     /*
@@ -221,9 +233,8 @@ namespace nanmath {
      * nm_div.cc
      */
     virtual int div_2();
-    virtual int div_d(nm_digit v);
-    virtual int div_d(nm_digit v, nanmath_int& r);
-    virtual int div(nanmath_int &v, nanmath_int& r);
+    virtual int div_d(nm_digit v, nm_digit *r=NULL);
+    virtual int div(nanmath_int &v, nanmath_int &r=nnull);
     virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int& r);
     
     /*
@@ -285,15 +296,16 @@ namespace nanmath {
     
     int karatsuba_mul(nanmath_int &b);
     int s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    #define s_mul(a, b, c) s_mul_digs(a, b, c, (a).get_used() + (b).get_used() + 1)
     int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
-    
     /*
      * 数据定义区域
      */
     
   protected:
+    char _funcname[MAX_BUFF_SIZE];
     int _lasterr;      /* 最后一次错误 */
     
   protected:
@@ -309,9 +321,6 @@ namespace nanmath {
     int _sign;        /* 标志位 */
     nm_digit *_dp;		/* 队列 */
   };
-  
-  /* 一个空值 */
-  extern nanmath_int nnull;
   
 #if 0
   /* 实现操作符号重载 */

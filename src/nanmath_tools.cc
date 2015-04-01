@@ -46,67 +46,46 @@ namespace nanmath {
   }
   
   char *nanmath_int::result(int radix) {
-#if 0
-    if ((_used <= 0) || (_alloc <= 0) || (_dp == NULL)) {
-      return NULL;
-    }
-    
-    /* 进制数最大64 */
     if (radix < 2 || radix > 64) {
-      _lasterr = NM_VAL;
+      set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
       return NULL;
     }
     
-    /* 计算字符串缓存长度 */
-    size_t size = _used * DIGIT_BIT + 1;    /* 最大也就这么大了 */
-    char *rs = cast(char, nm_malloc(size));
-    if (rs == NULL) {
-      _lasterr = NM_MEM;
+    if ((_used == 0) || (_alloc == 0) || (_dp == NULL))  {
       return NULL;
     }
     
-    /* 从最高位开始输出 */
-    char *res = rs;
-    char v[DIGIT_BIT];
-    memset(v, 0, DIGIT_BIT);
-    
-    size = sizeof(nm_word) * (_used + 1);
-    nm_word *nl = cast(nm_word, nm_malloc(size));
-    if (nl == NULL) {
-      nm_free(rs);
-      _lasterr = NM_MEM;
+    char *s = cast(char, nm_malloc(_used * DIGIT_BIT + 1));
+    if (s == NULL) {
+      set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return NULL;
     }
+    char *r_str = s;
     
-    /* 先转换一下进制吧，保存的是2^DIGIT_BIT进制
-     * 要进行转换
-     */
-    for (int i = _used - 1; i >= 0; i--) {
-      nl[i] = cast_f(nm_word, (_dp[i] & NM_MASK) << (i * DIGIT_BIT));
+    if (iszero() == 1) {
+      *r_str++ = '0';
+      *r_str = '\0';
+      return r_str;
     }
     
-    for (int i = _used - 1; i >= 0; i--) {
-      nm_word n = (_dp[i] & NM_MASK) << i;
-      
-      /* 按照基表进行转码 */
-      int j = 0;
-      nm_digit rem = 0;
-      do {
-        rem = n % cast_f(nm_digit, radix);
-        n /= cast_f(nm_digit, radix);
-        v[j++] = *(s_rmap + rem);
-      } while (n);
-      
-      /* 设置结果 */
-      j--;  /* 回退一个索引 */
-      do {
-        *res++ = v[j];
-      } while (j--);
+    if (_sign == NM_NEG) {
+      *r_str++ = '-';
     }
     
-    return rs;
-#endif
-    return NULL;
+    int digs = 0;
+    nm_digit r = 0;
+    while (iszero() == 0) {
+      if (div_d(cast_f(nm_digit, radix), &r) != NM_OK) {
+        return NULL;
+      }
+      *r_str++ = s_rmap[r];
+      ++digs;
+    }
+    
+    /* 翻转字符串 */
+    reverse_mem(cast_f(unsigned char *, s), digs);
+    *r_str = '\0';
+    return s;
   }
   
   /* 清除无效位 */
@@ -138,16 +117,12 @@ namespace nanmath {
     clamp();
   }
   
-  int nanmath_int::set_s(const char *str) {
-    return set_s(str, 10);
-  }
-  
   int nanmath_int::set_s(const char *str, int radix) {
     int y, neg;
     char ch;
     
     if (radix < 2 || radix > 64) {
-      return NM_VAL;
+      return set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
     }
     
     /* 清0 */
@@ -193,6 +168,7 @@ namespace nanmath {
     if (iszero() == 0) {
       _sign = neg;
     }
+
     return NM_OK;
   }
   
@@ -203,8 +179,7 @@ namespace nanmath {
       size += (NM_PREC * 2) - (size % NM_PREC);
       nm_digit *tmp = cast(nm_digit, nm_realloc(_dp, sizeof(nm_digit) * size));
       if (tmp == NULL) {
-        _lasterr = NM_MEM;
-        return _lasterr;
+        return set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       }
       
       _dp = tmp;
@@ -280,7 +255,7 @@ namespace nanmath {
     size += (NM_PREC * 2) - (size % NM_PREC);
     _dp = cast(nm_digit, nm_malloc(sizeof(nm_digit) * size));
     if (_dp == NULL) {
-      _lasterr = NM_MEM;
+      set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return _lasterr;
     }
     
@@ -299,7 +274,7 @@ namespace nanmath {
     size += (NM_PREC * 2) - (size % NM_PREC);
     _dp = cast(nm_digit, nm_realloc(_dp, sizeof(nm_digit) * size));
     if (_dp == NULL) {
-      _lasterr = NM_MEM;
+      set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return _lasterr;
     }
 
@@ -323,6 +298,7 @@ namespace nanmath {
       _dp = tmp;
       _alloc = _used;
     }
+
     return NM_OK;
   }
   
@@ -331,6 +307,7 @@ namespace nanmath {
     if (t.copy(*this) != NM_OK) return _lasterr;
     if (copy(b) != NM_OK) return _lasterr;
     if (b.copy(t) != NM_OK) return _lasterr;
+
     return NM_OK;
   }
   
@@ -339,6 +316,7 @@ namespace nanmath {
     if (t.copy(a) != NM_OK) return _lasterr;
     if (a.copy(b) != NM_OK) return _lasterr;
     if (b.copy(t) != NM_OK) return _lasterr;
+
     return NM_OK;
   }
   
@@ -358,6 +336,19 @@ namespace nanmath {
   
   int nanmath_int::testnull() {
     return (int)(this == &nnull);
+  }
+  
+  void nanmath_int::reverse_mem(unsigned char *s, int len) {
+    unsigned char t;
+    int ix = 0;
+    int iy = len - 1;
+    while (ix < iy) {
+      t = s[ix];
+      s[ix] = s[iy];
+      s[iy] = t;
+      ++ix;
+      --iy;
+    }
   }
   
 }

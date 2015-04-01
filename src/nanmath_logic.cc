@@ -55,8 +55,9 @@ namespace nanmath {
   
   int nanmath_int::rsh(nm_size b) {
     /* 不用移动 */
-    if (b <= 0)
+    if (b <= 0) {
       return NM_OK;
+    }
     
     /* 如果要移动的位数大于当的已经使用的位数，好吧直接清0 */
     if ((_used * DIGIT_BIT) <= b) {
@@ -132,8 +133,9 @@ namespace nanmath {
   
   /* 右移b位 */
   int nanmath_int::rsh_d(nm_size b) {
-    if (b <= 0)
+    if (b <= 0) {
       return NM_OK;
+    }
     
     /* 如果要移动的位数大于当的已经使用的位数，好吧直接清0 */
     if (_used <= b) {
@@ -158,7 +160,6 @@ namespace nanmath {
       
     /* 移除额外的位 */
     _used -= b;
-    
     return NM_OK;
   }
   

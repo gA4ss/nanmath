@@ -3,7 +3,7 @@
 namespace nanmath {
   
   int nanmath_int::add_d(nm_digit b) {
-    int res, ix, oldused;
+    int ix, oldused;
     nm_digit *tmp, mu;
     nm_word x;
 
@@ -17,10 +17,10 @@ namespace nanmath {
     if (_sign == NM_NEG && (_used > 1 || _dp[0] >= b)) {
       /* |a| - b */
       _sign = NM_ZPOS;        /* 求a的绝对值 */
-      res = sub_d(b);
+      sub_d(b);
       _sign = NM_NEG;
       clamp();
-      return res;
+      return _lasterr;
     }
     
     oldused = _used;
@@ -70,7 +70,7 @@ namespace nanmath {
   }
 
   int nanmath_int::add(nanmath_int &b) {
-    int res = NM_OK;
+    int res;
 
     /* 获取标志 */
     int sa = _sign;
