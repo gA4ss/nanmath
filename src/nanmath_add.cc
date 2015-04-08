@@ -2,10 +2,10 @@
 
 namespace nanmath {
   
-  int nanmath_int::add_d(nm_digit b) {
+  int nanmath_int::add_d(nanmath_digit b) {
     int ix, oldused;
-    nm_digit *tmp, mu;
-    nm_word x;
+    nanmath_digit *tmp, mu;
+    nanmath_word x;
 
     if (_alloc < _used + 1) {
       if (grow(_used + 1) != NM_OK) {
@@ -71,21 +71,25 @@ namespace nanmath {
 
   int nanmath_int::add(nanmath_int &b) {
     int res;
+    nanmath_int c;
 
     /* 获取标志 */
     int sa = _sign;
     int sb = b.get_sign();
     
     if (sa == sb) {   /* 符号相同 */
-      res = s_add(b);
+      res = s_add(*this, b, c);
     } else {
       if (cmp_mag(*this, b) == NM_LT) { /* a < b */
         _sign = sb;
-        res = s_sub(b, *this);    /* b - a */
-      } else {                    /* a >= b */
-        res = s_sub(*this, b);    /* a - b */
+        res = s_sub(b, *this, c);       /* b - a */
+      } else {                          /* a >= b */
+        res = s_sub(*this, b, c);       /* a - b */
       }
     }/* end if */
+
+    /* 复制结果 */
+    res = copy(c);
 
     return res;
   }
@@ -96,103 +100,40 @@ namespace nanmath {
     return add(b);
   }
   
-  /* 辅助算法, 依赖 HAC pp.594, Algorithm 14.7 */
-  int nanmath_int::s_add(nanmath_int &b) {
-    nanmath_int *x;
-    int olduse, min, max;
-    
-    /* 求出位数大的那一个，并且让x指向它 */
-    if (_used > b.get_used()) {
-      min = b.get_used();
-      max = _used;
-      x = this;
-    } else {
-      min = _used;
-      max = b.get_used();
-      x = &b;
-    }
-    
-    /* 初始化结果 */
-    if (_alloc < max + 1) {
-      if (grow(max + 1) != NM_OK) {
-        return _lasterr;
-      }
-    }
-    
-    /* 保存旧的位数，设置新的 */
-    olduse = _used;
-    _used = max + 1;
-    
-    nm_digit *tmpa = _dp;
-    nm_digit *tmpb = cast(nm_digit, b.get_digit());
-    nm_digit *tmpx = cast(nm_digit, x->get_digit());
-    
-    int i;
-    nm_digit u = 0;
-    for (i = 0; i < min; i++) {
-      *tmpa += (*tmpb++ + u);             /* 运算 */
-      u = *tmpa >> ((nm_digit)DIGIT_BIT); /* 取进位 */
-      *tmpa++ &= NM_MASK;                 /* 清0进位 */
-    }
-      
-    /* 两个数的位数不一样，则将位数多的高出的位加上进位 */
-    if (min != max) {
-      for (; i < max; i++) {
-        *tmpa = tmpx[i] + u;
-        u = *tmpa >> ((nm_digit)DIGIT_BIT);
-        *tmpa++ &= NM_MASK;
-      }
-    }
-      
-    /* 加最终的进位 */
-    *tmpa++ = u;
-    
-    clamp();
-    return NM_OK;
-  }
-  
-  int nanmath_int::s_add(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NM_OK)
-      return _lasterr;
-    return s_add(b);
-  }
- 
   int nanmath_int::s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
-    nanmath_int *x;
-    int olduse, min, max;
+    nanmath_int &x = a;
+    int min, max;
     
     /* 求出位数大的那一个，并且让x指向它 */
     if (a.get_used() > b.get_used()) {
       min = b.get_used();
       max = a.get_used();
-      x = this;
+      x = a;
     } else {
       min = a.get_used();
       max = b.get_used();
-      x = &b;
+      x = b;
     }
     
     /* 初始化结果 */
     if (c.get_alloc() < max + 1) {
       if (c.grow(max + 1) != NM_OK) {
-        return _lasterr;
+        return c.get_lasterr();
       }
     }
+    c.zero();
+    c.set_used(max + 1);
     
-    /* 保存旧的位数，设置新的 */
-    olduse = _used;
-    _used = max + 1;
-    
-    nm_digit *tmpa = cast(nm_digit, a.get_digit());
-    nm_digit *tmpb = cast(nm_digit, b.get_digit());
-    nm_digit *tmpc = cast(nm_digit, c.get_digit());
-    nm_digit *tmpx = cast(nm_digit, x->get_digit());
+    nanmath_digit *tmpa = cast(nanmath_digit, a.get_digit());
+    nanmath_digit *tmpb = cast(nanmath_digit, b.get_digit());
+    nanmath_digit *tmpc = cast(nanmath_digit, c.get_digit());
+    nanmath_digit *tmpx = cast(nanmath_digit, x.get_digit());
     
     int i;
-    nm_digit u = 0;
+    nanmath_digit u = 0;
     for (i = 0; i < min; i++) {
       *tmpc = *tmpa++ + *tmpb++ + u;      /* 运算 */
-      u = *tmpc >> ((nm_digit)DIGIT_BIT); /* 取进位 */
+      u = *tmpc >> ((nanmath_digit)DIGIT_BIT); /* 取进位 */
       *tmpc++ &= NM_MASK;                 /* 清0进位 */
     }
     
@@ -200,7 +141,7 @@ namespace nanmath {
     if (min != max) {
       for (; i < max; i++) {
         *tmpc = tmpx[i] + u;
-        u = *tmpc >> ((nm_digit)DIGIT_BIT);
+        u = *tmpc >> ((nanmath_digit)DIGIT_BIT);
         *tmpc++ &= NM_MASK;
       }
     }

@@ -35,6 +35,7 @@ namespace nanmath {
     memset(_funcname, 0, MAX_BUFF_SIZE);
   }
   
+  /* 设置最后一次错误 */
   int nanmath_int::set_lasterr(int err, char *fn) {
     _lasterr = err;
     strcpy(_funcname, fn);

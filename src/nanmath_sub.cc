@@ -1,8 +1,8 @@
 #include "nanmath.h"
 
 namespace nanmath {
-  int nanmath_int::sub_d(nm_digit b) {
-    nm_digit *tmpa, mu;
+  int nanmath_int::sub_d(nanmath_digit b) {
+    nanmath_digit *tmpa, mu;
     int res, ix;
     
     if (_alloc < _used + 1) {
@@ -39,12 +39,12 @@ namespace nanmath {
       
       /* subtract first digit */
       *tmpa -= b;
-      mu = *tmpa >> (sizeof(nm_digit) * CHAR_BIT - 1);  /* 取借位 */
+      mu = *tmpa >> (sizeof(nanmath_digit) * CHAR_BIT - 1);  /* 取借位 */
       *tmpa++ &= NM_MASK;
       
       for (ix = 1; ix < _used; ix++) {
         *tmpa -= mu;
-        mu = *tmpa >> (sizeof(nm_digit) * CHAR_BIT - 1);
+        mu = *tmpa >> (sizeof(nanmath_digit) * CHAR_BIT - 1);
         *tmpa++ &= NM_MASK;
       }
     }
@@ -59,20 +59,25 @@ namespace nanmath {
   }
   
   int nanmath_int::sub(nanmath_int &b) {
-    int res;
-    int sa = _sign;
-    int sb = b.get_sign();
+    int res, sa = _sign, sb = b.get_sign(), sc = 0;
+    nanmath_int c;
     
     if (sa != sb) {
-      res = s_add(b);
+      res = s_add(*this, b, c);
     } else {
       if (cmp_mag(*this, b) != NM_LT) {   /* a >= b */
-        res = s_sub(b);
+        res = s_sub(*this, b, c);
       } else {        /* a < b */
-        _sign = (sa == NM_ZPOS) ? NM_NEG : NM_ZPOS;
-        res = s_sub(b);
+        /* 设定结果符号 */
+        sc = (sa == NM_ZPOS) ? NM_NEG : NM_ZPOS;
+        c.set_sign(sc);
+        
+        res = s_sub(b, *this, c);
       }
     }
+    
+    res = copy(c);
+    
     return res;
   }
   
@@ -82,69 +87,38 @@ namespace nanmath {
     return sub(b);
   }
   
-  /* (指定 |a| > |b|), HAC pp.595 Algorithm 14.9 */
-  int nanmath_int::s_sub(nanmath_int &b) {
-    int min = b.get_used();
-    int max = _used;
-    
-    nm_digit *tmpa = _dp;
-    nm_digit *tmpb = cast(nm_digit, b.get_digit());
-    
-    int i;
-    nm_digit u = 0;     /* 借位 */
-    for (i = 0; i < min; i++) {
-      *tmpa -= (*tmpb++ - u);
-      u = *tmpa >> ((nm_digit)(CHAR_BIT * sizeof(nm_digit) - 1)); /* u其实是最高位MSB */
-      *tmpa++ &= NM_MASK;
-    }
-      
-    /* 处理高位 */
-    for (; i < max; i++) {
-      *tmpa -= u;
-      u = *tmpa >> ((nm_digit)(CHAR_BIT * sizeof(nm_digit) - 1));
-      *tmpa++ &= NM_MASK;
-    }
-    
-    clamp();
-    return NM_OK;
-  }
-
-  int nanmath_int::s_sub(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NM_OK)
-      return _lasterr;
-    return s_sub(b);
-  }
-  
   int nanmath_int::s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
     int min = b.get_used();
     int max = a.get_used();
     
     if (c.get_alloc() < max) {
       if (c.grow(max) != NM_OK) {
-        return _lasterr;
+        return c.get_lasterr();
       }
     }
+    c.zero();
+    c.set_used(max);
     
-    nm_digit *tmpa = cast(nm_digit, a.get_digit());
-    nm_digit *tmpb = cast(nm_digit, b.get_digit());
-    nm_digit *tmpc = cast(nm_digit, c.get_digit());
+    nanmath_digit *tmpa = cast(nanmath_digit, a.get_digit());
+    nanmath_digit *tmpb = cast(nanmath_digit, b.get_digit());
+    nanmath_digit *tmpc = cast(nanmath_digit, c.get_digit());
     
     int i;
-    nm_digit u = 0;     /* 借位 */
+    nanmath_digit u = 0;     /* 借位 */
     for (i = 0; i < min; i++) {
       *tmpc = *tmpa++ - *tmpb++ - u;
-      u = *tmpc >> ((nm_digit)(CHAR_BIT * sizeof(nm_digit) - 1)); /* u其实是最高位MSB */
+      u = *tmpc >> ((nanmath_digit)(CHAR_BIT * sizeof(nanmath_digit) - 1)); /* u其实是最高位MSB */
       *tmpc++ &= NM_MASK;
     }
     
     /* 处理高位 */
     for (; i < max; i++) {
       *tmpc -= u;
-      u = *tmpc >> ((nm_digit)(CHAR_BIT * sizeof(nm_digit) - 1));
+      u = *tmpc >> ((nanmath_digit)(CHAR_BIT * sizeof(nanmath_digit) - 1));
       *tmpc++ &= NM_MASK;
     }
     
-    clamp();
+    c.clamp();
     return NM_OK;
   }
 }

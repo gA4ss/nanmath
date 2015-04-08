@@ -17,7 +17,7 @@ namespace nanmath {
     }
   }
   
-  int nanmath_int::cmp_d(nm_digit b) {
+  int nanmath_int::cmp_d(nanmath_digit b) {
     if (_sign == NM_NEG) {
       return NM_LT;
     }
@@ -46,8 +46,8 @@ namespace nanmath {
     
     /* 相同的位数 */
     int used = a.get_used();
-    nm_digit *tmpa = cast(nm_digit, a.get_digit()) + (used - 1);
-    nm_digit *tmpb = cast(nm_digit, b.get_digit()) + (used - 1);
+    nanmath_digit *tmpa = cast(nanmath_digit, a.get_digit()) + (used - 1);
+    nanmath_digit *tmpb = cast(nanmath_digit, b.get_digit()) + (used - 1);
     
     for (int n = 0; n < used; ++n, --tmpa, --tmpb) {
       if (*tmpa > *tmpb) {

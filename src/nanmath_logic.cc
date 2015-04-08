@@ -3,13 +3,13 @@
 namespace nanmath {
   
   /* 向左移动2进制b位 */
-  int nanmath_int::lsh(nm_size b) {
+  int nanmath_int::lsh(nanmath_size b) {
     if (b <= 0) {
       return NM_OK;
     }
     
-    nm_size d = b / DIGIT_BIT;/* 有多少个位精度 */
-    nm_size g = (nm_size)(_used + d + 1);
+    nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
+    nanmath_size g = (nanmath_size)(_used + d + 1);
     if (_alloc < g) {
       if (grow(g) != NM_OK) {
         return _lasterr;
@@ -27,8 +27,8 @@ namespace nanmath {
     d = b % DIGIT_BIT;    /* 保证d < DIGIT_BIT */
     /* 如果d为0，说明上面已经移动完毕了 */
     if (d != 0) {
-      nm_digit *tmp, shift, mask, r, rr;
-      mask = (((nm_digit)1) << d) - 1;      /* 进位掩码 */
+      nanmath_digit *tmp, shift, mask, r, rr;
+      mask = (((nanmath_digit)1) << d) - 1;      /* 进位掩码 */
       shift = DIGIT_BIT - (int)d;           /* 一切位了取进位 */
       tmp = _dp;
       
@@ -53,7 +53,7 @@ namespace nanmath {
     return NM_OK;
   }
   
-  int nanmath_int::rsh(nm_size b) {
+  int nanmath_int::rsh(nanmath_size b) {
     /* 不用移动 */
     if (b <= 0) {
       return NM_OK;
@@ -65,7 +65,7 @@ namespace nanmath {
       return NM_OK;
     }
     
-    nm_size d = b / DIGIT_BIT;/* 有多少个位精度 */
+    nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
     
     /* 先移动整的 */
     if (d > 0) {
@@ -79,8 +79,8 @@ namespace nanmath {
     
     /* 如果d为0，说明上面已经移动完毕了 */
     if (d != 0) {
-      nm_digit *tmp, shift, mask, r, rr;
-      mask = (((nm_digit)1) << d) - 1;      /* 进位掩码 */
+      nanmath_digit *tmp, shift, mask, r, rr;
+      mask = (((nanmath_digit)1) << d) - 1;      /* 进位掩码 */
       shift = DIGIT_BIT - (int)d;           /* 一切位了取进位 */
       
       tmp = _dp + _used - 1;
@@ -102,7 +102,7 @@ namespace nanmath {
   }
   
   /* 左移精度b位 */
-  int nanmath_int::lsh_d(nm_size b) {
+  int nanmath_int::lsh_d(nanmath_size b) {
     if (b <= 0) {
       return NM_OK;
     }
@@ -113,7 +113,7 @@ namespace nanmath {
       }
     }
     
-    nm_digit *top, *bottom;
+    nanmath_digit *top, *bottom;
     _used += b;
     top = _dp + _used - 1;          /* 最高位 */
     bottom = _dp + _used - 1 - b;   /* 当前的有效位 */
@@ -132,7 +132,7 @@ namespace nanmath {
   }
   
   /* 右移b位 */
-  int nanmath_int::rsh_d(nm_size b) {
+  int nanmath_int::rsh_d(nanmath_size b) {
     if (b <= 0) {
       return NM_OK;
     }
@@ -145,8 +145,8 @@ namespace nanmath {
     
     /* 移动到底 */
     int x;
-    nm_digit *bottom = _dp;
-    nm_digit *top = _dp + b;
+    nanmath_digit *bottom = _dp;
+    nanmath_digit *top = _dp + b;
     
     /* 直接将要移动的位值放到它的位置上去 */
     for (x = 0; x < (_used - b); x++) {
@@ -172,10 +172,10 @@ namespace nanmath {
     int r = (_used - 1) * DIGIT_BIT;
     /* 最高digit的位 + fffff ... */
     /* 加上最高digit的位 */
-    nm_digit q = _dp[_used - 1];
-    while (q > ((nm_digit)0)) {
+    nanmath_digit q = _dp[_used - 1];
+    while (q > ((nanmath_digit)0)) {
       ++r;
-      q >>= ((nm_digit)1);
+      q >>= ((nanmath_digit)1);
     }
     return r;
   }

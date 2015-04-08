@@ -3,7 +3,7 @@
 namespace nanmath {
 
 #if 0
-  int nanmath_int::expt_d(nm_digit b) {
+  int nanmath_int::expt_d(nanmath_digit b) {
     int res;
     nanmath_int g;
     
@@ -11,7 +11,7 @@ namespace nanmath {
       return _lasterr;
     }
     
-    set(cast_f(nm_digit, 1));
+    set(cast_f(nanmath_digit, 1));
     
     while (b > 0) {
       if (b & 1) {

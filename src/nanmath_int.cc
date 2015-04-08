@@ -8,7 +8,7 @@ namespace nanmath {
   
   /* 初始化 */
   void nanmath_int::init() {
-    _dp = cast(nm_digit, nm_malloc(sizeof(nm_digit) * NM_PREC));
+    _dp = cast(nanmath_digit, nm_malloc(sizeof(nanmath_digit) * NM_PREC));
     if (_dp == NULL) {
       set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return;
@@ -23,6 +23,7 @@ namespace nanmath {
     _sign = NM_ZPOS;
     _lasterr = NM_OK;
     memset(_funcname, 0, MAX_BUFF_SIZE);
+    _result = NULL;
     
     /* 设定karatsuba算法的阀值 */
     _karatsuba_mul_threshold = 80;
@@ -34,7 +35,7 @@ namespace nanmath {
     return;
   }
   
-  nanmath_int::nanmath_int(nm_digit v) {
+  nanmath_int::nanmath_int(nanmath_digit v) {
     init();
     set(v);
   }

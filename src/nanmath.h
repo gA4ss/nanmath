@@ -14,6 +14,36 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <limits.h>
+#include <assert.h>
+
+#ifdef DEBUG
+
+#define NM_32BIT
+
+#define NANMATH_DBG(fmt, a...)    printf("%s,%s(),%d:" fmt "/n", __FILE__,__FUNCTION__,__LINE__, ##a)
+
+#else /* 只有在发布时，才支持64位 */
+
+/* x86 64位支持 */
+#if defined(__x86_64__)
+#if !defined(NM_64BIT)
+#define NM_64BIT
+#endif
+#endif/* end __x86_64__ */
+
+
+#define NANMATH_DBG(fmt, a...)
+
+#endif/* end DEBUG */
+
+/* nan检查 */
+#ifdef USE_NANMATH_CHECK
+#define nanmath_assert(x)          assert(x)
+#define nanmath_check(x, e)        (assert(x), e)
+#else
+#define nanmath_assert(x)
+#define nanmath_check(x, e)        (e)
+#endif
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -27,52 +57,9 @@
 #define cast(t,x)  ((t*)(x))
 #define cast_f(t,x)  ((t)(x))
 
-#ifdef DEBUG
-
-#define NM_32BIT
-
-#else /* 只有在发布时，才支持64位 */
-
-/* x86 64位支持 */
-#if defined(__x86_64__)
-#if !defined(NM_64BIT)
-#define NM_64BIT
-#endif
-#endif/* end __x86_64__ */
-
-#endif
-  
-/* 一个'nm_digit'必须可以存储 DIGIT_BIT + 1位的长度
- * 一个'nm_word'必须可以存储 2*DIGIT_BIT + 1位的长度
- *
- * 一个'nm_digit'最少要保证可以存储7位
- */
-
-#if !defined(NM_64BIT)
-/* 32位 */
-  #if defined(_MSC_VER) || defined(__BORLANDC__)
-    typedef unsigned __int64    ulong64;
-    typedef signed __int64      long64;
-  #else
-    typedef unsigned long long  ulong64;
-    typedef signed long long    long64;
-  #endif
-
-  typedef unsigned long       nm_digit;
-  typedef ulong64             nm_word;
-  #define DIGIT_BIT           28              /* 相当于一个2^28进制的数 */
-#else
-/* 64位 */
-  typedef unsigned long       nm_digit;
-  typedef unsigned long       nm_word __attribute__ ((mode(TI)));   /* 128位 */
-  #define DIGIT_BIT           60              /* 相当于一个2^60进制的数 */
-#endif
-
-typedef nm_word               nm_size;
-
 /* 位类型的最大值 */
 #define NM_DIGIT_BIT     DIGIT_BIT
-#define NM_MASK          ((((nm_digit)1)<<((nm_digit)DIGIT_BIT))-((nm_digit)1))
+#define NM_MASK          ((((nanmath_digit)1)<<((nanmath_digit)DIGIT_BIT))-((nanmath_digit)1))
 #define NM_DIGIT_MAX     NM_MASK
 
 #define NM_LT         -1
@@ -105,13 +92,43 @@ typedef nm_word               nm_size;
 #endif
 #endif
 
-#define NM_WARRAY               (1 << (sizeof(nm_word) * CHAR_BIT - 2 * DIGIT_BIT + 1))
+#define NM_WARRAY               (1 << (sizeof(nanmath_word) * CHAR_BIT - 2 * DIGIT_BIT + 1))
 
+/* 最大的缓存区长度 */
 #ifndef MAX_BUFF_SIZE
 #define MAX_BUFF_SIZE 256
 #endif
 
 namespace nanmath {
+  
+  
+  /* 一个'nanmath_digit'必须可以存储 DIGIT_BIT + 1位的长度
+   * 一个'nanmath_word'必须可以存储 2*DIGIT_BIT + 1位的长度
+   *
+   * 一个'nanmath_digit'最少要保证可以存储7位
+   */
+  
+#if !defined(NM_64BIT)
+  /* 32位 */
+#if defined(_MSC_VER) || defined(__BORLANDC__)
+  typedef unsigned __int64    ulong64;
+  typedef signed __int64      long64;
+#else
+  typedef unsigned long long  ulong64;
+  typedef signed long long    long64;
+#endif
+  
+  typedef unsigned long       nanmath_digit;
+  typedef ulong64             nanmath_word;
+#define DIGIT_BIT           28              /* 相当于一个2^28进制的数 */
+#else
+  /* 64位 */
+  typedef unsigned long       nanmath_digit;
+  typedef unsigned long       nanmath_word __attribute__ ((mode(TI)));   /* 128位 */
+#define DIGIT_BIT           60              /* 相当于一个2^60进制的数 */
+#endif
+  
+  typedef nanmath_word         nanmath_size;
   
   /* 一个空值 */
   class nanmath_int;
@@ -127,7 +144,7 @@ namespace nanmath {
      * nm_construct.cc
      */
     nanmath_int();
-    nanmath_int(nm_digit v);
+    nanmath_int(nanmath_digit v);
     nanmath_int(nanmath_int &v);
     virtual ~nanmath_int();
     
@@ -141,13 +158,13 @@ namespace nanmath {
     virtual int get_used() { return _used; };
     virtual int get_alloc() { return _alloc; };
     virtual int get_sign() { return _sign; };
-    virtual const nm_digit *get_digit() { return _dp; };
+    virtual const nanmath_digit *get_digit() { return _dp; };
     
     /* FIXME: 不安全的操作 */
     virtual void set_used(int v) { _used = v; };
     virtual void set_alloc(int v) { _alloc = v; };
     virtual void set_sign(int v) { _sign = v; };
-    virtual void set_digit(nm_digit *v) { _dp = v; };
+    virtual void set_digit(nanmath_digit *v) { _dp = v; };
     
   public:
     /*
@@ -175,16 +192,16 @@ namespace nanmath {
      * 外部功能接口
      * nm_tools.cc
      */
-    virtual nm_digit getv(int index);                     /* 获取索引对应的值,如果是-1则出错 */
-    virtual nm_digit *getp(int index);                    /* 获取索引对应的值的指针,如果是NULL则出错 */
-    virtual char *result(int radix=10);                   /* 打印结果,由外部释放 */
+    virtual nanmath_digit getv(int index);                /* 获取索引对应的值,如果是-1则出错 */
+    virtual nanmath_digit *getp(int index);               /* 获取索引对应的值的指针,如果是NULL则出错 */
+    virtual char *result(char **pstr=NULL, int radix=10); /* 打印结果,由外部释放 */
     virtual void clamp();                                 /* 缩减无用位 */
     virtual void spread();                                /* 保证值对应位 */
-    virtual void set(nm_digit v);                         /* 设置单精度位 */
+    virtual void set(nanmath_digit v);                    /* 设置单精度位 */
     virtual int set_s(const char *str, int radix=10);     /* 按照radix给定的基,来设定数字 */
     virtual int copy(nanmath_int &d);                     /* 从d中拷贝到自身中 */
     virtual int paste(nanmath_int &d);                    /* 将自身的值黏贴到d中 */
-    virtual int grow(nm_size size);                       /* 重新分配内存到size */
+    virtual int grow(nanmath_size size);                  /* 重新分配内存到size */
     virtual int allocs(int size);                         /* 按照尺寸分配内存 */
     virtual int resize(int size);                         /* 清除原有内存，并分配内存 */
     virtual int shrink();                                 /* 使用位与分配位相同 */
@@ -207,7 +224,7 @@ namespace nanmath {
      * 加法单元
      * nm_add.cc
      */
-    virtual int add_d(nm_digit b);
+    virtual int add_d(nanmath_digit b);
     virtual int add(nanmath_int &b);
     virtual int add(nanmath_int &a, nanmath_int &b);
     
@@ -215,7 +232,7 @@ namespace nanmath {
      * 减法单元
      * nm_sub.cc
      */
-    virtual int sub_d(nm_digit b);
+    virtual int sub_d(nanmath_digit b);
     virtual int sub(nanmath_int &b);
     virtual int sub(nanmath_int &a, nanmath_int &b);
     
@@ -224,7 +241,7 @@ namespace nanmath {
      * nm_mul.cc
      */
     virtual int mul_2();
-    virtual int mul_d(nm_digit b);
+    virtual int mul_d(nanmath_digit b);
     virtual int mul(nanmath_int &b);
     virtual int mul(nanmath_int &a, nanmath_int &b);
     
@@ -233,7 +250,7 @@ namespace nanmath {
      * nm_div.cc
      */
     virtual int div_2();
-    virtual int div_d(nm_digit v, nm_digit *r=NULL);
+    virtual int div_d(nanmath_digit v, nanmath_digit *r=NULL);
     virtual int div(nanmath_int &v, nanmath_int &r=nnull);
     virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int& r);
     
@@ -245,16 +262,16 @@ namespace nanmath {
     /*
      * 逻辑运算
      */
-    virtual int lsh(nm_size b);
-    virtual int rsh(nm_size b);
-    virtual int lsh_d(nm_size b);
-    virtual int rsh_d(nm_size b);
+    virtual int lsh(nanmath_size b);
+    virtual int rsh(nanmath_size b);
+    virtual int lsh_d(nanmath_size b);
+    virtual int rsh_d(nanmath_size b);
     virtual int count_bits();                 /* 计算总共用了多少位,最高位是多少 */
     
     /*
      * 指数运算
      */
-    //virtual int expt_d(nm_digit b);
+    //virtual int expt_d(nanmath_digit b);
     
     /*
      * 对数运算
@@ -269,7 +286,7 @@ namespace nanmath {
      * nm_cmp.cc
      */
     virtual int cmp(nanmath_int &b);
-    virtual int cmp_d(nm_digit b);
+    virtual int cmp_d(nanmath_digit b);
     virtual int cmp_mag(nanmath_int &a, nanmath_int &b);
     
     /*
@@ -286,20 +303,17 @@ namespace nanmath {
      * 一些支持运算的底层算法
      */
   protected:
-    int s_add(nanmath_int &b);
-    int s_add(nanmath_int &a, nanmath_int &b);
-    int s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    static int s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    static int s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
-    int s_sub(nanmath_int &b);             /* |a| > |b| */
-    int s_sub(nanmath_int &a, nanmath_int &b);
-    int s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c);
-    
-    int karatsuba_mul(nanmath_int &b);
-    int s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    static int karatsuba_mul(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    static int s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     #define s_mul(a, b, c) s_mul_digs(a, b, c, (a).get_used() + (b).get_used() + 1)
-    int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
-    int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
-    int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    static int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    static int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    static int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    
+    
     /*
      * 数据定义区域
      */
@@ -307,6 +321,7 @@ namespace nanmath {
   protected:
     char _funcname[MAX_BUFF_SIZE];
     int _lasterr;      /* 最后一次错误 */
+    char *_result;
     
   protected:
     /*
@@ -315,11 +330,15 @@ namespace nanmath {
     int _karatsuba_mul_threshold;
     int _karatsuba_sqr_threshold;
   
+#ifdef DEBUG
+  public:
+#else
   private:
+#endif
     int _used;        /* 使用了多少位 */
     int _alloc;       /* 分配的总数量 */
     int _sign;        /* 标志位 */
-    nm_digit *_dp;		/* 队列 */
+    nanmath_digit *_dp;		/* 队列 */
   };
   
 #if 0
@@ -327,7 +346,7 @@ namespace nanmath {
   class nm_int : public nanmath_int {
   public:
     nm_int();
-    nm_int(nm_digit v);
+    nm_int(nanmath_digit v);
     nm_int(nm_int &v);
     virtual ~nm_int();
   };

@@ -4,7 +4,7 @@
 namespace nanmath {
   
 //  /* 辅助函数 */
-//  static nm_digit f_pow_d(nanmath_int &a, nm_digit d, int n) {
+//  static nanmath_digit f_pow_d(nanmath_int &a, nanmath_digit d, int n) {
 //    if ((n < 0) || (n > DIGIT_BIT)) {
 //      a.set_lasterr(NM_VAL);
 //      return 0;
@@ -14,7 +14,7 @@ namespace nanmath {
 //      return 1;
 //    }
 //    
-//    nm_digit res = d;
+//    nanmath_digit res = d;
 //    while (n--) {
 //      res *= res;
 //    }
@@ -25,15 +25,15 @@ namespace nanmath {
   /* 进制基表 */
   static const char *s_rmap = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
   
-  nm_digit nanmath_int::getv(int index) {
-    nm_digit *p = getp(index);
+  nanmath_digit nanmath_int::getv(int index) {
+    nanmath_digit *p = getp(index);
     if (p == NULL) {
-      return (nm_digit)-1;
+      return (nanmath_digit)-1;
     }
-    return cast_f(nm_digit, ((*p) & NM_MASK));
+    return cast_f(nanmath_digit, ((*p) & NM_MASK));
   }
   
-  nm_digit *nanmath_int::getp(int index) {
+  nanmath_digit *nanmath_int::getp(int index) {
     if ((_used <= 0) || (_alloc <= 0) || (_dp == NULL)) {
       return NULL;
     }
@@ -45,7 +45,13 @@ namespace nanmath {
     return _dp + index;
   }
   
-  char *nanmath_int::result(int radix) {
+  /* 输出结果,pstr指向的值，如果为空则分配内存，不为空直接释放空间
+   */
+  char *nanmath_int::result(char **pstr, int radix) {
+    if (pstr == NULL) {
+      pstr = &_result;
+    }
+    
     if (radix < 2 || radix > 64) {
       set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
       return NULL;
@@ -55,27 +61,38 @@ namespace nanmath {
       return NULL;
     }
     
-    char *s = cast(char, nm_malloc(_used * DIGIT_BIT + 1));
-    if (s == NULL) {
+    /* 参数为不为空则分配内存 */
+    if (*pstr != NULL) {
+      nm_free(*pstr);
+      *pstr = NULL;
+    }
+    
+    char *r_str = cast(char, nm_malloc(_used * DIGIT_BIT + 1));
+    if (r_str == NULL) {
       set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return NULL;
     }
-    char *r_str = s;
+    *pstr = r_str;
     
     if (iszero() == 1) {
       *r_str++ = '0';
       *r_str = '\0';
-      return r_str;
+      return *pstr;
     }
+    
+    /* 生成临时变量 */
+    nanmath_int tmp;
+    paste(tmp);
     
     if (_sign == NM_NEG) {
       *r_str++ = '-';
+      tmp.set_sign(NM_ZPOS);
     }
     
     int digs = 0;
-    nm_digit r = 0;
-    while (iszero() == 0) {
-      if (div_d(cast_f(nm_digit, radix), &r) != NM_OK) {
+    nanmath_digit r = 0;
+    while (tmp.iszero() == 0) {
+      if (tmp.div_d(cast_f(nanmath_digit, radix), &r) != NM_OK) {
         return NULL;
       }
       *r_str++ = s_rmap[r];
@@ -83,9 +100,13 @@ namespace nanmath {
     }
     
     /* 翻转字符串 */
-    reverse_mem(cast_f(unsigned char *, s), digs);
+    char *rs = *pstr;
+    if (_sign == NM_NEG) {
+      rs = *pstr + 1;  /* 跳过负号 */
+    }
+    reverse_mem(cast_f(unsigned char *, rs), digs);
     *r_str = '\0';
-    return s;
+    return *pstr;
   }
   
   /* 清除无效位 */
@@ -111,7 +132,7 @@ namespace nanmath {
     }
   }
   
-  void nanmath_int::set(nm_digit v) {
+  void nanmath_int::set(nanmath_digit v) {
     zero();
     _dp[0] = v & NM_MASK;
     clamp();
@@ -150,11 +171,11 @@ namespace nanmath {
       
       /* y必须小于基数 */
       if (y < radix) {
-        if (mul_d(cast_f(nm_digit, radix)) != NM_OK) {
+        if (mul_d(cast_f(nanmath_digit, radix)) != NM_OK) {
           return _lasterr;
         }
         
-        if (add_d(cast_f(nm_digit, y)) != NM_OK) {
+        if (add_d(cast_f(nanmath_digit, y)) != NM_OK) {
           return _lasterr;
         }
       } else {
@@ -173,11 +194,11 @@ namespace nanmath {
   }
   
   /* 增长数值内存到为size */
-  int nanmath_int::grow (nm_size size) {
+  int nanmath_int::grow (nanmath_size size) {
     if (_alloc < size) {
       /* 至少是精度的2倍 */
       size += (NM_PREC * 2) - (size % NM_PREC);
-      nm_digit *tmp = cast(nm_digit, nm_realloc(_dp, sizeof(nm_digit) * size));
+      nanmath_digit *tmp = cast(nanmath_digit, nm_realloc(_dp, sizeof(nanmath_digit) * size));
       if (tmp == NULL) {
         return set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       }
@@ -202,8 +223,8 @@ namespace nanmath {
         return _lasterr;
     }
     
-    nm_digit *tmpa = _dp;
-    nm_digit *tmpd = cast(nm_digit,d.get_digit());
+    nanmath_digit *tmpa = _dp;
+    nanmath_digit *tmpd = cast(nanmath_digit, d.get_digit());
     
     /* 复制 */
     int n;
@@ -230,10 +251,10 @@ namespace nanmath {
         return _lasterr;
     }
     
-    nm_digit *tmpa, *tmpb;
+    nanmath_digit *tmpa, *tmpb;
     int n;
     tmpa = _dp;
-    tmpb = cast(nm_digit,d.get_digit());
+    tmpb = cast(nanmath_digit,d.get_digit());
 
     /* 复制 */
     for (n = 0; n < _used; n++) {
@@ -253,26 +274,19 @@ namespace nanmath {
   
   int nanmath_int::allocs(int size) {
     size += (NM_PREC * 2) - (size % NM_PREC);
-    _dp = cast(nm_digit, nm_malloc(sizeof(nm_digit) * size));
+    _dp = cast(nanmath_digit, nm_malloc(sizeof(nanmath_digit) * size));
     if (_dp == NULL) {
-      set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
-      return _lasterr;
+      return set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
     }
     
-    _used = 0;
-    _alloc = size;
-    _sign = NM_ZPOS;
-    
-    for (int x = 0; x < size; x++) {
-      _dp[x] = 0;
-    }
+    zero();
     
     return NM_OK;
   }
   
   int nanmath_int::resize(int size) {
     size += (NM_PREC * 2) - (size % NM_PREC);
-    _dp = cast(nm_digit, nm_realloc(_dp, sizeof(nm_digit) * size));
+    _dp = cast(nanmath_digit, nm_realloc(_dp, sizeof(nanmath_digit) * size));
     if (_dp == NULL) {
       set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return _lasterr;
@@ -289,10 +303,10 @@ namespace nanmath {
   }
   
   int nanmath_int::shrink() {
-    nm_digit *tmp;
+    nanmath_digit *tmp;
     
     if (_alloc != _used) {
-      if ((tmp = cast(nm_digit, nm_realloc(_dp, sizeof(nm_digit) * _used))) == NULL) {
+      if ((tmp = cast(nanmath_digit, nm_realloc(_dp, sizeof(nanmath_digit) * _used))) == NULL) {
         return NM_MEM;
       }
       _dp = tmp;
@@ -331,6 +345,10 @@ namespace nanmath {
       _dp = NULL;
       _alloc = _used = 0;
       _sign = NM_ZPOS;
+    }
+    
+    if (_result != NULL) {
+      nm_free(_result);
     }
   }
   

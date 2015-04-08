@@ -7,7 +7,7 @@ namespace nanmath {
     _sign = NM_ZPOS;
     _used = 1;
     
-    nm_digit *tmp = _dp;
+    nanmath_digit *tmp = _dp;
     for (int n = 0; n < _alloc; n++) {
       *tmp++ = 0;
     }
