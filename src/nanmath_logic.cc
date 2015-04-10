@@ -59,12 +59,6 @@ namespace nanmath {
       return NM_OK;
     }
     
-    /* 如果要移动的位数大于当的已经使用的位数，好吧直接清0 */
-    if ((_used * DIGIT_BIT) <= b) {
-      zero();
-      return NM_OK;
-    }
-    
     nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
     
     /* 先移动整的 */
@@ -89,7 +83,7 @@ namespace nanmath {
       r = 0;
       for (int x = _used - 1; x >= 0; x--) {
         rr = *tmp & mask;                   /* 取进位 */
-        *tmp = ((*tmp >> d) | r) & NM_MASK; /* 进行位移 */
+        *tmp = (*tmp >> d) | (r << shift);  /* 进行位移 */
         tmp--;
       
         /* 保存进位 */

@@ -194,7 +194,7 @@ namespace nanmath {
      */
     virtual nanmath_digit getv(int index);                /* 获取索引对应的值,如果是-1则出错 */
     virtual nanmath_digit *getp(int index);               /* 获取索引对应的值的指针,如果是NULL则出错 */
-    virtual char *result(char **pstr=NULL, int radix=10); /* 打印结果,由外部释放 */
+    virtual char *result(int radix=10);                   /* 打印结果,由外部释放 */
     virtual void clamp();                                 /* 缩减无用位 */
     virtual void spread();                                /* 保证值对应位 */
     virtual void set(nanmath_digit v);                    /* 设置单精度位 */

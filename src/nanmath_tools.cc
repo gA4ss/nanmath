@@ -47,11 +47,7 @@ namespace nanmath {
   
   /* 输出结果,pstr指向的值，如果为空则分配内存，不为空直接释放空间
    */
-  char *nanmath_int::result(char **pstr, int radix) {
-    if (pstr == NULL) {
-      pstr = &_result;
-    }
-    
+  char *nanmath_int::result(int radix) {
     if (radix < 2 || radix > 64) {
       set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
       return NULL;
@@ -62,9 +58,9 @@ namespace nanmath {
     }
     
     /* 参数为不为空则分配内存 */
-    if (*pstr != NULL) {
-      nm_free(*pstr);
-      *pstr = NULL;
+    if (_result != NULL) {
+      nm_free(_result);
+      _result = NULL;
     }
     
     char *r_str = cast(char, nm_malloc(_used * DIGIT_BIT + 1));
@@ -72,12 +68,12 @@ namespace nanmath {
       set_lasterr(NM_MEM, cast_f(char*, __FUNCTION__));
       return NULL;
     }
-    *pstr = r_str;
+    _result = r_str;
     
     if (iszero() == 1) {
       *r_str++ = '0';
       *r_str = '\0';
-      return *pstr;
+      return _result;
     }
     
     /* 生成临时变量 */
@@ -100,13 +96,13 @@ namespace nanmath {
     }
     
     /* 翻转字符串 */
-    char *rs = *pstr;
+    char *rs = _result;
     if (_sign == NM_NEG) {
-      rs = *pstr + 1;  /* 跳过负号 */
+      rs = _result + 1;  /* 跳过负号 */
     }
     reverse_mem(cast_f(unsigned char *, rs), digs);
     *r_str = '\0';
-    return *pstr;
+    return _result;
   }
   
   /* 清除无效位 */

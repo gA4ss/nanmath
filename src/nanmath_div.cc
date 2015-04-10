@@ -147,15 +147,8 @@ namespace nanmath {
     x.set_sign(NM_ZPOS);
     y.set_sign(NM_ZPOS);
     
-    NANMATH_DBG("before normalize x y\n");
-    NANMATH_DBG("x's used = %d, y's used = %d\n", x.get_used(), y.get_used());
-    NANMATH_DBG("x = %s\n", x.result());
-    NANMATH_DBG("y = %s\n", y.result());
-    
     /* 标准化x,y, 确保 y >= v/2, [v == 2^DIGIT_BIT] */
     int norm = y.count_bits() % DIGIT_BIT;      /* 一个模上DIGIT_BIT循环系统的数值 */
-    
-    NANMATH_DBG("norm1 = %d, y's count_bits = %d\n", norm, y.count_bits());
     
     /* 保证这个值小于DIGIT_BIT的一半 
      * 如果除数的最高digit所占用的实际位数小于精度-1，换句话说就是
@@ -165,7 +158,6 @@ namespace nanmath {
      */
     if (norm < (int)(DIGIT_BIT-1)) {
       norm = (DIGIT_BIT-1) - norm;              /* 余数其余的位 */
-      NANMATH_DBG("norm2 = %d\n", norm);
       
       /* 被除数标准化 */
       if (x.lsh(norm) != NM_OK) {
@@ -180,15 +172,8 @@ namespace nanmath {
       norm = 0;
     }
     
-    NANMATH_DBG("after normalize x y\n");
-    NANMATH_DBG("x's used = %d, y's used = %d\n", x.get_used(), y.get_used());
-    NANMATH_DBG("x = %s\n", x.result());
-    NANMATH_DBG("y = %s\n", y.result());
-    
     int n = x.get_used() - 1;           /* 被除数最高位 */
     int t = y.get_used() - 1;           /* 除数最高位 */
-    
-    NANMATH_DBG("n = %d, t = %d, n - t = %d\n", n, t, n - t);
     
     /* 将 除数的位数 设定到 被除数 相等的位置 
      * 高位先做除法
@@ -198,8 +183,6 @@ namespace nanmath {
     if (y.lsh_d(n - t) != NM_OK) {
       return _lasterr;
     }
-
-    NANMATH_DBG("after y.lsh_d (n - t) = %s\n", y.result());
     
     /* 计算x的n - t所指向的位与y的有多少个
      * 这里就是做正规的除法
@@ -214,15 +197,11 @@ namespace nanmath {
       }
     }
     
-    NANMATH_DBG("after 1th div x = %s, q = %s\n", x.result(), q.result());
-    
     /* 经过以上的运算，就是计算被除数比除数大于的那个部分
      * y右移动 n - t 位 回到原先的位置
      * 这里 x 就是 竖式 经过 减法的余数
      */
     y.rsh_d(n - t);
-    
-    NANMATH_DBG("after y.rsh_d(n - t) = %s\n", y.result());
     
     /* 计算其余的部分
      * n 是 最初被除数 最高位
@@ -232,12 +211,10 @@ namespace nanmath {
     int i;
     nanmath_int t1, t2;
     for (i = n; i >= (t + 1); i--) {
-      NANMATH_DBG("i = %d\n", i);
       /* 如果当前位大于被除数位数,直到于x当前的位数相等
        * x会不断的做减法
        */
       if (i > x.get_used()) {
-        NANMATH_DBG("i > x's used => continue\n");
         continue;
       }
       
@@ -250,9 +227,6 @@ namespace nanmath {
         /* 单digit除法，扩展到字除法 */
         nanmath_word tmp;
         
-//      NANMATH_DBG("x in tmp = %s, y in tmp = %s\n", x.result(), y.result());
-
-        
         tmp = cast_f(nanmath_word, x.getv(i)) << cast_f(nanmath_word, DIGIT_BIT);
         tmp |= cast_f(nanmath_word, x.getv(i - 1));
         tmp /= cast_f(nanmath_word, y.getv(t));
@@ -260,8 +234,6 @@ namespace nanmath {
           tmp = NM_MASK;
         *(q.getp(i - t - 1)) = cast_f(nanmath_digit, (tmp & (nanmath_word) (NM_MASK)));
       }
-      
-//    NANMATH_DBG("now q1 = %s\n", q.result());
       
       /* 当前的digit的值 + 1,为了以下循环-1的一个逻辑规则而已 */
       *(q.getp(i - t - 1)) = (q.getv(i - t - 1) + 1) & NM_MASK;
@@ -291,8 +263,6 @@ namespace nanmath {
                                            * 保证被除数大于除数
                                            */
       
-//    NANMATH_DBG("now q2 = %s\n", q.result());
-      
       /* 到这里，被除数就小于余数了
        * 重新设置t1为原始被除数 然后 乘上 当前的商
        */
@@ -300,49 +270,19 @@ namespace nanmath {
         return _lasterr;
       }
       
-      NANMATH_DBG("q's dp[%d] = %d\n", i - t - 1, q.getv(i - t - 1));
-      
-      NANMATH_DBG("1) t1 = %s\n", t1.result());
-      
       if (t1.mul_d(q.getv(i - t - 1)) != NM_OK) {
         return _lasterr;
       }
-      
-      NANMATH_DBG("2) t1 = %s\n", t1.result());
-
       
       /* 还原应该有的位 */
       if (t1.lsh_d(i - t - 1) != NM_OK) {
         return _lasterr;
       }
       
-      NANMATH_DBG("3) t1 = %s\n", t1.result());
-
-      NANMATH_DBG("x before sub = %s\n", x.result());
-      
-#ifdef DEBUG
-      if (x.get_sign() == NM_ZPOS) {
-        NANMATH_DBG("x = +\n");
-      } else {
-        NANMATH_DBG("x = -\n");
-      }
-      
-      if (t1.get_sign() == NM_ZPOS) {
-        NANMATH_DBG("t1 = +\n");
-      } else {
-        NANMATH_DBG("t1 = -\n");
-      }
-#endif
-      
-      NANMATH_DBG("x's used = %d\n", x.get_used());
-      NANMATH_DBG("t1's used = %d\n", t1.get_used());
-      
       /* 相减 */
       if (x.sub(t1) != NM_OK) {
         return _lasterr;
       }
-      
-      NANMATH_DBG("x after sub = %s\n", x.result());
       
       /* 如果当前被除数小于当前的商
        * 则还原以上减法操作
@@ -372,6 +312,8 @@ namespace nanmath {
       x.set_sign(_sign);
     }
     
+    NANMATH_DBG("x = %s\n", x.result());
+    
     /* 复制符号 */
     q.clamp();
     copy(q);
@@ -379,6 +321,7 @@ namespace nanmath {
     
     /* 求余数 */
     if (r.testnull() == 0) {
+      NANMATH_DBG("norm = %d\n", norm);
       x.rsh(norm);
       r.copy(x);
     }
