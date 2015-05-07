@@ -4,7 +4,7 @@ namespace nanmath {
   /* 乘以2 */
   int nanmath_int::mul_2() {
     /* 为了防止溢出增加一位 */
-    if (grow(_used + 1) != NM_OK) {
+    if (grow(_used + 1) != NANMATH_OK) {
       return _lasterr;
     }
     
@@ -22,7 +22,7 @@ namespace nanmath {
        * 的左移1位，如果产生进位也不影响上面。
        * 左移后在这位最低位设置上进位
        */
-      *tmp = ((*tmp << ((nanmath_digit)1)) | r) & NM_MASK;
+      *tmp = ((*tmp << ((nanmath_digit)1)) | r) & NANMATH_MASK;
       tmp++;
       
       r = rr; /* 保存进位 */
@@ -34,14 +34,14 @@ namespace nanmath {
       *tmp = 1;
       ++_used;
     }
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   /* 乘以一个单精度位 */
   int nanmath_int::mul_d(nanmath_digit b) {
     /* 确定有足够空间存放 a * b */
     if (_alloc < _used + 1) {
-      if (grow(_used + 1) != NM_OK) {
+      if (grow(_used + 1) != NANMATH_OK) {
         return _lasterr;
       }
     }
@@ -56,7 +56,7 @@ namespace nanmath {
       /* 获取进位 */
       u = (nanmath_digit)(r >> ((nanmath_word) DIGIT_BIT));
       /* 设置结果的低位部分 */
-      *tmp++ = (nanmath_digit)(r & ((nanmath_word) NM_MASK));
+      *tmp++ = (nanmath_digit)(r & ((nanmath_word) NANMATH_MASK));
     }
     
     /* 设置最后的进位  */
@@ -67,27 +67,27 @@ namespace nanmath {
     
     _used++;
     clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
     
   int nanmath_int::mul(nanmath_int &b) {
     nanmath_int c;
-    int res = NM_OK;
-    int neg = (_sign == b.get_sign()) ? NM_ZPOS : NM_NEG;
+    int res = NANMATH_OK;
+    int neg = (_sign == b.get_sign()) ? NANMATH_ZPOS : NANMATH_NEG;
     
     /* 使用 Karatsuba算法 */
     if (MIN(_used, b.get_used()) >= _karatsuba_mul_threshold) {
-      if ((res = karatsuba_mul(*this, b, c)) != NM_OK)
+      if ((res = karatsuba_mul(*this, b, c)) != NANMATH_OK)
         return res;
       res = copy(c);
     } else {
       /* 使用快速倍乘算法
        * 
-       * 当结果小于NM_WARRAY位并且digits的数量不影响进位时
+       * 当结果小于NANMATH_WARRAY位并且digits的数量不影响进位时
        */
       int digs = _used + b.get_used() + 1;
       
-      if ((digs < NM_WARRAY) &&
+      if ((digs < NANMATH_WARRAY) &&
           MIN(_used, b.get_used()) <=
           (1 << ((CHAR_BIT * sizeof(nanmath_word)) - (2 * DIGIT_BIT)))) {
         res = s_mul_digs(*this, b, *this, digs);
@@ -97,12 +97,12 @@ namespace nanmath {
     }
     
     /* 符号 */
-    _sign = (_used > 0) ? neg : NM_ZPOS;
+    _sign = (_used > 0) ? neg : NANMATH_ZPOS;
     return res;
   }
   
   int nanmath_int::mul(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NM_OK)
+    if (copy(a) != NANMATH_OK)
       return _lasterr;
     return mul(b);
   }
@@ -147,21 +147,21 @@ namespace nanmath {
     B = B >> 1;
     
     /* x0,y0保存B位，x1,y1保存其余位 */
-    if (x0.allocs(B) != NM_OK)
+    if (x0.allocs(B) != NANMATH_OK)
       goto _err;
-    if (x1.allocs(a_used - B) != NM_OK)
+    if (x1.allocs(a_used - B) != NANMATH_OK)
       goto _err;
-    if (y0.allocs(B) != NM_OK)
+    if (y0.allocs(B) != NANMATH_OK)
       goto _err;
-    if (y1.allocs(b_used - B) != NM_OK)
+    if (y1.allocs(b_used - B) != NANMATH_OK)
       goto _err;
     
     /* 临时数 */
-    if (t1.allocs(B * 2) != NM_OK)
+    if (t1.allocs(B * 2) != NANMATH_OK)
       goto _err;
-    if (x0y0.allocs(B * 2) != NM_OK)
+    if (x0y0.allocs(B * 2) != NANMATH_OK)
       goto _err;
-    if (x1y1.allocs(B * 2) != NM_OK)
+    if (x1y1.allocs(B * 2) != NANMATH_OK)
       goto _err;
     
     /* 现在设置使用位，分配多大位，使用了多大位 */
@@ -202,34 +202,34 @@ namespace nanmath {
     y0.clamp();
     
     /* 现在计算结果 x0y0 与 x1y1 */
-    if ((res = x0y0.mul(x0, y0)) != NM_OK)
+    if ((res = x0y0.mul(x0, y0)) != NANMATH_OK)
       goto _err;          /* x0y0 = x0*y0 */
-    if ((res = x1y1.mul(x1, y1)) != NM_OK)
+    if ((res = x1y1.mul(x1, y1)) != NANMATH_OK)
       goto _err;          /* x1y1 = x1*y1 */
     
     /* 计算 x1+x0 and y1+y0 */
-    if ((res = s_add(x1, x0, t1)) != NM_OK)
+    if ((res = s_add(x1, x0, t1)) != NANMATH_OK)
       goto _err;          /* t1 = x1 + x0 */
-    if ((res = s_add(y1, y0, x0)) != NM_OK)
+    if ((res = s_add(y1, y0, x0)) != NANMATH_OK)
       goto _err;          /* t2 = y1 + y0 */
-    if ((res = t1.mul(x0)) != NM_OK)
+    if ((res = t1.mul(x0)) != NANMATH_OK)
       goto _err;          /* t1 = (x1 + x0) * (y1 + y0) */
     
     /* 加上 x0y0 */
-    if ((res = x0.add(x0y0, x1y1)) != NM_OK)
+    if ((res = x0.add(x0y0, x1y1)) != NANMATH_OK)
       goto _err;          /* t2 = x0y0 + x1y1 */
-    if ((res = s_sub(t1, x0, t1)) != NM_OK)
+    if ((res = s_sub(t1, x0, t1)) != NANMATH_OK)
       goto _err;          /* t1 = (x1+x0)*(y1+y0) - (x1y1 + x0y0) */
     
     /* 左移B位 */
-    if ((res = t1.lsh_d(B)) != NM_OK)
+    if ((res = t1.lsh_d(B)) != NANMATH_OK)
       goto _err;          /* t1 = (x0y0 + x1y1 - (x1-x0)*(y1-y0))<<B */
-    if ((res = x1y1.lsh_d(B * 2)) != NM_OK)
+    if ((res = x1y1.lsh_d(B * 2)) != NANMATH_OK)
       goto _err;          /* x1y1 = x1y1 << 2*B */
     
-    if ((res = t1.add(x0y0)) != NM_OK)
+    if ((res = t1.add(x0y0)) != NANMATH_OK)
       goto _err;          /* t1 = x0y0 + t1 */
-    if ((res = c.add(t1, x1y1)) != NM_OK)
+    if ((res = c.add(t1, x1y1)) != NANMATH_OK)
       goto _err;          /* t1 = x0y0 + t1 + x1y1 */
     
   _err:
@@ -245,14 +245,14 @@ namespace nanmath {
     nanmath_digit tmpx, *tmpt, *tmpy, *tmpa;
     
     /* 选择更快速的算法 */
-    if (((digs) < NM_WARRAY) &&
+    if (((digs) < NANMATH_WARRAY) &&
         MIN (a.get_used(), b.get_used()) <
         (1 << ((CHAR_BIT * sizeof(nanmath_word)) - (2 * DIGIT_BIT)))) {
       return s_mul_digs_(a, b, c, digs);
     }
     
     /* 临时结果位 */
-    if (t.allocs(digs) != NM_OK) {
+    if (t.allocs(digs) != NANMATH_OK) {
       return t.get_lasterr();
     }
     t.set_used(digs);
@@ -272,7 +272,7 @@ namespace nanmath {
         r = ((nanmath_word)*tmpt) + ((nanmath_word)tmpx) * ((nanmath_word)*tmpy++) + ((nanmath_word)u);
         
         /* 取结果 */
-        *tmpt++ = (nanmath_digit)(r & ((nanmath_word)NM_MASK));
+        *tmpt++ = (nanmath_digit)(r & ((nanmath_word)NANMATH_MASK));
         
         /* 取进位 */
         u = (nanmath_digit)(r >> ((nanmath_word)DIGIT_BIT));
@@ -286,7 +286,7 @@ namespace nanmath {
     
     t.clamp();
     t.exch(c);
-    return NM_OK;
+    return NANMATH_OK;
   }
 
   int nanmath_int::s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
@@ -297,13 +297,13 @@ namespace nanmath {
     nanmath_digit tmpx, *tmpt, *tmpy, *tmpa;
     
     /* 如果位数小使用更快的算法 */
-    if (((a.get_used() + b.get_used() + 1) < NM_WARRAY)
+    if (((a.get_used() + b.get_used() + 1) < NANMATH_WARRAY)
         && MIN (a.get_used(), b.get_used()) <
         (1 << ((CHAR_BIT * sizeof (nanmath_word)) - (2 * DIGIT_BIT)))) {
       return s_mul_high_digs_(a, b, c, digs);
     }
     
-    if (t.allocs(a.get_used() + b.get_used() + 1) != NM_OK) {
+    if (t.allocs(a.get_used() + b.get_used() + 1) != NANMATH_OK) {
       return t.get_lasterr();
     }
     t.set_used(a.get_used() + b.get_used() + 1);
@@ -320,23 +320,23 @@ namespace nanmath {
       for (iy = digs - ix; iy < pb; iy++) {
         r = ((nanmath_word)*tmpt) + ((nanmath_word)tmpx) *
         ((nanmath_word)*tmpy++) + ((nanmath_word) u);
-        *tmpt++ = (nanmath_digit)(r & ((nanmath_word) NM_MASK));
+        *tmpt++ = (nanmath_digit)(r & ((nanmath_word) NANMATH_MASK));
         u = (nanmath_digit)(r >> ((nanmath_word) DIGIT_BIT));
       }
       *tmpt = u;
     }
     t.clamp();
     t.exch(c);
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   /* Based on Algorithm 14.12 on pp.595 of HAC. */
   int nanmath_int::s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     int ix, iz;
-    nanmath_digit W[NM_WARRAY];        /* 存放最终结果 */
+    nanmath_digit W[NANMATH_WARRAY];        /* 存放最终结果 */
     
     if (c.get_alloc() < digs) {
-      if (c.grow(digs) != NM_OK) {
+      if (c.grow(digs) != NANMATH_OK) {
         return c.get_lasterr();
       }
     }
@@ -369,7 +369,7 @@ namespace nanmath {
       }
       
       /* 设定结果 */
-      W[ix] = cast_f(nanmath_digit, _W) & NM_MASK;
+      W[ix] = cast_f(nanmath_digit, _W) & NANMATH_MASK;
       
      /* 产生进位 */
       _W = _W >> cast_f(nanmath_word, DIGIT_BIT);
@@ -393,17 +393,17 @@ namespace nanmath {
     }
     
     c.clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
 
   /* 直接从digs位相乘 */
   int nanmath_int::s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     int ix, iz;
-    nanmath_digit W[NM_WARRAY];
+    nanmath_digit W[NANMATH_WARRAY];
     
     int pa = a.get_used() + b.get_used();
     if (c.get_alloc() < pa) {
-      if (c.grow(pa) != NM_OK) {
+      if (c.grow(pa) != NANMATH_OK) {
         return c.get_lasterr();
       }
     }
@@ -426,7 +426,7 @@ namespace nanmath {
       }
       
       /* 设置结果 */
-      W[ix] = cast_f(nanmath_digit, _W) & NM_MASK;
+      W[ix] = cast_f(nanmath_digit, _W) & NANMATH_MASK;
       
       /* 产生进位 */
       _W = _W >> cast_f(nanmath_word, DIGIT_BIT);
@@ -444,7 +444,7 @@ namespace nanmath {
       *tmpc++ = 0;
     }
     c.clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
 }
 

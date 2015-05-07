@@ -4,7 +4,7 @@ namespace nanmath {
   
   /* 清0 */
   void nanmath_int::zero() {
-    _sign = NM_ZPOS;
+    _sign = NANMATH_ZPOS;
     _used = 1;
     
     nanmath_digit *tmp = _dp;
@@ -16,22 +16,22 @@ namespace nanmath {
   int nanmath_int::iszero() {
     if ((_used == 0) ||
       ((_used == 1) && (_dp[0] == 0))) {
-      return NM_YES;
+      return NANMATH_YES;
     }
     
-    return NM_NO;
+    return NANMATH_NO;
   }
   
   int nanmath_int::iseven() {
-    return ((_used > 0 && ((_dp[0] & 1) == 0)) ? NM_YES : NM_NO);
+    return ((_used > 0 && ((_dp[0] & 1) == 0)) ? NANMATH_YES : NANMATH_NO);
   }
   
   int nanmath_int::sodd() {
-    return ((_used > 0 && ((_dp[0] & 1) == 1)) ? NM_YES : NM_NO);
+    return ((_used > 0 && ((_dp[0] & 1) == 1)) ? NANMATH_YES : NANMATH_NO);
   }
  
   int nanmath_int::abs() {
-    _sign = NM_ZPOS;
-    return NM_OK;
+    _sign = NANMATH_ZPOS;
+    return NANMATH_OK;
   }
 }

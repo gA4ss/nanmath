@@ -7,7 +7,7 @@ namespace nanmath {
     int res;
     nanmath_int g;
     
-    if (g.copy(b) != NM_OK) {
+    if (g.copy(b) != NANMATH_OK) {
       return _lasterr;
     }
     
@@ -15,7 +15,7 @@ namespace nanmath {
     
     while (b > 0) {
       if (b & 1) {
-        if (mul(g)) != NM_OK) {
+        if (mul(g)) != NANMATH_OK) {
           mp_clear (&g);
           return res;
         }

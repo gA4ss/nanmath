@@ -3,14 +3,14 @@
 namespace nanmath {
   int nanmath_int::cmp(nanmath_int &b) {
     if (_sign != b.get_sign()) {
-      if (_sign == NM_NEG) {
-        return NM_LT;
+      if (_sign == NANMATH_NEG) {
+        return NANMATH_LT;
       } else {
-        return NM_GT;
+        return NANMATH_GT;
       }
     }
     
-    if (_sign == NM_NEG) {
+    if (_sign == NANMATH_NEG) {
       return cmp_mag(b, *this);
     } else {
       return cmp_mag(*this, b);
@@ -18,30 +18,30 @@ namespace nanmath {
   }
   
   int nanmath_int::cmp_d(nanmath_digit b) {
-    if (_sign == NM_NEG) {
-      return NM_LT;
+    if (_sign == NANMATH_NEG) {
+      return NANMATH_LT;
     }
     
     if (_used > 1) {
-      return NM_GT;
+      return NANMATH_GT;
     }
     
     if (_dp[0] > b) {
-      return NM_GT;
+      return NANMATH_GT;
     } else if (_dp[0] < b) {
-      return NM_LT;
+      return NANMATH_LT;
     } else {
-      return NM_EQ;
+      return NANMATH_EQ;
     }
   }
   
   int nanmath_int::cmp_mag (nanmath_int &a, nanmath_int &b) {
     if (a.get_used() > b.get_used()) {
-      return NM_GT;
+      return NANMATH_GT;
     }
     
     if (a.get_used() < b.get_used()) {
-      return NM_LT;
+      return NANMATH_LT;
     }
     
     /* 相同的位数 */
@@ -51,14 +51,14 @@ namespace nanmath {
     
     for (int n = 0; n < used; ++n, --tmpa, --tmpb) {
       if (*tmpa > *tmpb) {
-        return NM_GT;
+        return NANMATH_GT;
       }
       
       if (*tmpa < *tmpb) {
-        return NM_LT;
+        return NANMATH_LT;
       }
     }
-    return NM_EQ;
+    return NANMATH_EQ;
   }
   
 }

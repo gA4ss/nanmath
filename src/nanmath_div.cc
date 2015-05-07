@@ -23,7 +23,7 @@ namespace nanmath {
   int nanmath_int::div_2() {
     if ((_used == 0) || (_alloc == 0) || (_dp == NULL)) {
       zero();
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     nanmath_digit *tmpa = cast(nanmath_digit, _dp + _used - 1);
@@ -37,19 +37,19 @@ namespace nanmath {
     }
     
     clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   int nanmath_int::div_d(nanmath_digit v, nanmath_digit *r) {
     /* 除数不能为0 */
     if (v == 0) {
-      return set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
+      return set_lasterr(NANMATH_VAL, cast_f(char*, __FUNCTION__));
     }
     
     /* 除数是1，被除数是0 */
     if (v == 1 || iszero()) {
       if (r) *r = 0;
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     int ix;
@@ -66,7 +66,7 @@ namespace nanmath {
     
     /* 分配商的内存 */
     nanmath_int q;
-    if (q.allocs(_used) != NM_OK) {
+    if (q.allocs(_used) != NANMATH_OK) {
       return _lasterr;
     }
     
@@ -96,7 +96,7 @@ namespace nanmath {
     
     q.clamp();
     copy(q);
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   /*
@@ -107,45 +107,45 @@ namespace nanmath {
     
     /* 除数为0 */
     if (v.iszero()) {
-      return set_lasterr(NM_VAL, cast_f(char*, __FUNCTION__));
+      return set_lasterr(NANMATH_VAL, cast_f(char*, __FUNCTION__));
     }
     
     /* 如果被除数小于除数,则商为0,余数等于被除数 */
-    if (cmp_mag(*this, v) == NM_LT) {
+    if (cmp_mag(*this, v) == NANMATH_LT) {
       
       if (r.testnull() == 0) {
-        if (r.copy(*this) != NM_OK)
+        if (r.copy(*this) != NANMATH_OK)
           return _lasterr;
       }
       
       /* 商为0 */
       zero();
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     /* 这里就保证了 被除数 大于 除数 */
     
     /* 商 */
     nanmath_int q;
-    if (q.allocs(_used + 2) != NM_OK) {
+    if (q.allocs(_used + 2) != NANMATH_OK) {
       return _lasterr;
     }
     q.set_used(_used + 2);
     
     /* x = 被除数, y = 除数 */
     nanmath_int x, y;
-    if (x.copy(*this) != NM_OK) {
+    if (x.copy(*this) != NANMATH_OK) {
       return _lasterr;
     }
     
-    if (y.copy(v) != NM_OK) {
+    if (y.copy(v) != NANMATH_OK) {
       return _lasterr;
     }
     
     /* 修订符号 */
-    int neg = (_sign == v.get_sign()) ? NM_ZPOS : NM_NEG;
-    x.set_sign(NM_ZPOS);
-    y.set_sign(NM_ZPOS);
+    int neg = (_sign == v.get_sign()) ? NANMATH_ZPOS : NANMATH_NEG;
+    x.set_sign(NANMATH_ZPOS);
+    y.set_sign(NANMATH_ZPOS);
     
     /* 标准化x,y, 确保 y >= v/2, [v == 2^DIGIT_BIT] */
     int norm = y.count_bits() % DIGIT_BIT;      /* 一个模上DIGIT_BIT循环系统的数值 */
@@ -160,12 +160,12 @@ namespace nanmath {
       norm = (DIGIT_BIT-1) - norm;              /* 余数其余的位 */
       
       /* 被除数标准化 */
-      if (x.lsh(norm) != NM_OK) {
+      if (x.lsh(norm) != NANMATH_OK) {
         return _lasterr;
       }
       
       /* 除数标准化 */
-      if (y.lsh(norm) != NM_OK) {
+      if (y.lsh(norm) != NANMATH_OK) {
         return _lasterr;
       }
     } else {
@@ -180,19 +180,19 @@ namespace nanmath {
      * / 56789
      *   345
      */
-    if (y.lsh_d(n - t) != NM_OK) {
+    if (y.lsh_d(n - t) != NANMATH_OK) {
       return _lasterr;
     }
     
     /* 计算x的n - t所指向的位与y的有多少个
      * 这里就是做正规的除法
      */
-    while (x.cmp(y) != NM_LT) {
+    while (x.cmp(y) != NANMATH_LT) {
       /* 商的位置是在被除数与除数的位数相差的地方开始
        * 想想列竖式
        */
       ++(*q.getp(n - t));
-      if (x.sub(y) != NM_OK) {
+      if (x.sub(y) != NANMATH_OK) {
         return _lasterr;
       }
     }
@@ -230,15 +230,15 @@ namespace nanmath {
         tmp = cast_f(nanmath_word, x.getv(i)) << cast_f(nanmath_word, DIGIT_BIT);
         tmp |= cast_f(nanmath_word, x.getv(i - 1));
         tmp /= cast_f(nanmath_word, y.getv(t));
-        if (tmp > cast_f(nanmath_word, NM_MASK))
-          tmp = NM_MASK;
-        *(q.getp(i - t - 1)) = cast_f(nanmath_digit, (tmp & (nanmath_word) (NM_MASK)));
+        if (tmp > cast_f(nanmath_word, NANMATH_MASK))
+          tmp = NANMATH_MASK;
+        *(q.getp(i - t - 1)) = cast_f(nanmath_digit, (tmp & (nanmath_word) (NANMATH_MASK)));
       }
       
       /* 当前的digit的值 + 1,为了以下循环-1的一个逻辑规则而已 */
-      *(q.getp(i - t - 1)) = (q.getv(i - t - 1) + 1) & NM_MASK;
+      *(q.getp(i - t - 1)) = (q.getv(i - t - 1) + 1) & NANMATH_MASK;
       do {
-        *(q.getp(i - t - 1)) = (q.getv(i - t - 1) - 1) & NM_MASK;
+        *(q.getp(i - t - 1)) = (q.getv(i - t - 1) - 1) & NANMATH_MASK;
         
         /* 除数左边2位 
          * 如果除数不满2位，则把t1的最低digit设置为0
@@ -250,7 +250,7 @@ namespace nanmath {
         *(t1.getp(1)) = y.getv(t);
         
         /* 这里计算t1 */
-        if (t1.mul_d(q.getv(i - t - 1)) != NM_OK) {
+        if (t1.mul_d(q.getv(i - t - 1)) != NANMATH_OK) {
           return _lasterr;
         }
         
@@ -259,47 +259,47 @@ namespace nanmath {
         *(t2.getp(0)) = (i - 2 < 0) ? 0 : x.getv(i - 2);
         *(t2.getp(1)) = (i - 1 < 0) ? 0 : x.getv(i - 1);
         *(t2.getp(2)) = x.getv(i);
-      } while (cmp_mag(t1, t2) == NM_GT); /* while (t1 > t2) 
+      } while (cmp_mag(t1, t2) == NANMATH_GT); /* while (t1 > t2) 
                                            * 保证被除数大于除数
                                            */
       
       /* 到这里，被除数就小于余数了
        * 重新设置t1为原始被除数 然后 乘上 当前的商
        */
-      if (t1.copy(y) != NM_OK) {
+      if (t1.copy(y) != NANMATH_OK) {
         return _lasterr;
       }
       
-      if (t1.mul_d(q.getv(i - t - 1)) != NM_OK) {
+      if (t1.mul_d(q.getv(i - t - 1)) != NANMATH_OK) {
         return _lasterr;
       }
       
       /* 还原应该有的位 */
-      if (t1.lsh_d(i - t - 1) != NM_OK) {
+      if (t1.lsh_d(i - t - 1) != NANMATH_OK) {
         return _lasterr;
       }
       
       /* 相减 */
-      if (x.sub(t1) != NM_OK) {
+      if (x.sub(t1) != NANMATH_OK) {
         return _lasterr;
       }
       
       /* 如果当前被除数小于当前的商
        * 则还原以上减法操作
        */
-      if (x.get_sign() == NM_NEG) {
-        if (t1.copy(y) != NM_OK) {
+      if (x.get_sign() == NANMATH_NEG) {
+        if (t1.copy(y) != NANMATH_OK) {
           return _lasterr;
         }
-        if (t1.lsh_d(i - t - 1) != NM_OK) {
+        if (t1.lsh_d(i - t - 1) != NANMATH_OK) {
           return _lasterr;
         }
-        if (x.add(t1) != NM_OK) {
+        if (x.add(t1) != NANMATH_OK) {
           return _lasterr;
         }
         
         /* 减去前面另外加上的1 */
-        *(q.getp(i - t - 1)) = (q.getv(i - t - 1) - 1UL) & NM_MASK;
+        *(q.getp(i - t - 1)) = (q.getv(i - t - 1) - 1UL) & NANMATH_MASK;
       }
     }/* end for */
     
@@ -307,12 +307,10 @@ namespace nanmath {
     
     /* 余数不为0，则按照原先被除数的 */
     if (x.iszero()) {
-      x.set_sign(NM_ZPOS);
+      x.set_sign(NANMATH_ZPOS);
     } else {
       x.set_sign(_sign);
     }
-    
-    NANMATH_DBG("x = %s\n", x.result());
     
     /* 复制符号 */
     q.clamp();
@@ -321,15 +319,14 @@ namespace nanmath {
     
     /* 求余数 */
     if (r.testnull() == 0) {
-      NANMATH_DBG("norm = %d\n", norm);
       x.rsh(norm);
       r.copy(x);
     }
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   int nanmath_int::div(nanmath_int &a, nanmath_int &b, nanmath_int& r) {
-    if (copy(a) != NM_OK)
+    if (copy(a) != NANMATH_OK)
       return _lasterr;
     return div(b, r);
   }

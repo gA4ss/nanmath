@@ -5,20 +5,20 @@ namespace nanmath {
   /* 向左移动2进制b位 */
   int nanmath_int::lsh(nanmath_size b) {
     if (b <= 0) {
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
     nanmath_size g = (nanmath_size)(_used + d + 1);
     if (_alloc < g) {
-      if (grow(g) != NM_OK) {
+      if (grow(g) != NANMATH_OK) {
         return _lasterr;
       }
     }
     
     /* 首先移动整数倍 */
     if (d > 0) {
-      if (lsh_d(d) != NM_OK) {
+      if (lsh_d(d) != NANMATH_OK) {
         return _lasterr;
       }
     }
@@ -36,7 +36,7 @@ namespace nanmath {
       /* 每位都与剩余部分参与运算 */
       for (int x = 0; x < _used; x++) {
         rr = (*tmp >> shift) & mask;        /* 取进位 */
-        *tmp = ((*tmp << d) | r) & NM_MASK; /* 进行位移 */
+        *tmp = ((*tmp << d) | r) & NANMATH_MASK; /* 进行位移 */
         tmp++;
         
         /* 保存进位 */
@@ -50,20 +50,20 @@ namespace nanmath {
     }
     
     clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   int nanmath_int::rsh(nanmath_size b) {
     /* 不用移动 */
     if (b <= 0) {
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
     
     /* 先移动整的 */
     if (d > 0) {
-      if (rsh_d(d) != NM_OK) {
+      if (rsh_d(d) != NANMATH_OK) {
         return _lasterr;
       }
     }
@@ -92,17 +92,17 @@ namespace nanmath {
     }
     
     clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   /* 左移精度b位 */
   int nanmath_int::lsh_d(nanmath_size b) {
     if (b <= 0) {
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     if (_alloc < _used + b) {
-      if (grow(_used + b) != NM_OK) {
+      if (grow(_used + b) != NANMATH_OK) {
         return _lasterr;
       }
     }
@@ -122,19 +122,19 @@ namespace nanmath {
     for (int x = 0; x < b; x++) {
       *top++ = 0;
     }
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   /* 右移b位 */
   int nanmath_int::rsh_d(nanmath_size b) {
     if (b <= 0) {
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     /* 如果要移动的位数大于当的已经使用的位数，好吧直接清0 */
     if (_used <= b) {
       zero();
-      return NM_OK;
+      return NANMATH_OK;
     }
     
     /* 移动到底 */
@@ -154,7 +154,7 @@ namespace nanmath {
       
     /* 移除额外的位 */
     _used -= b;
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   int nanmath_int::count_bits() {

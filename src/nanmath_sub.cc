@@ -6,15 +6,15 @@ namespace nanmath {
     int res, ix;
     
     if (_alloc < _used + 1) {
-      if (grow(_used + 1) != NM_OK)
+      if (grow(_used + 1) != NANMATH_OK)
         return _lasterr;
     }
     
     /* 如果a是负的，减去b则使用加法，最后改变符号 */
-    if (_sign == NM_NEG) {
-      _sign = NM_ZPOS;
+    if (_sign == NANMATH_NEG) {
+      _sign = NANMATH_ZPOS;
       res = add_d(b);
-      _sign = NM_NEG;     /* 改变回来符号 */
+      _sign = NANMATH_NEG;     /* 改变回来符号 */
       clamp();
       return res;
     }
@@ -32,20 +32,20 @@ namespace nanmath {
       }
       ix = 1;
       
-      _sign = NM_NEG;
+      _sign = NANMATH_NEG;
       _used = 1;
     } else {     /* a > b */
-      _sign = NM_ZPOS;
+      _sign = NANMATH_ZPOS;
       
       /* subtract first digit */
       *tmpa -= b;
       mu = *tmpa >> (sizeof(nanmath_digit) * CHAR_BIT - 1);  /* 取借位 */
-      *tmpa++ &= NM_MASK;
+      *tmpa++ &= NANMATH_MASK;
       
       for (ix = 1; ix < _used; ix++) {
         *tmpa -= mu;
         mu = *tmpa >> (sizeof(nanmath_digit) * CHAR_BIT - 1);
-        *tmpa++ &= NM_MASK;
+        *tmpa++ &= NANMATH_MASK;
       }
     }
     
@@ -55,7 +55,7 @@ namespace nanmath {
     }
     
     clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
   
   int nanmath_int::sub(nanmath_int &b) {
@@ -65,11 +65,11 @@ namespace nanmath {
     if (sa != sb) {
       res = s_add(*this, b, c);
     } else {
-      if (cmp_mag(*this, b) != NM_LT) {   /* a >= b */
+      if (cmp_mag(*this, b) != NANMATH_LT) {   /* a >= b */
         res = s_sub(*this, b, c);
       } else {        /* a < b */
         /* 设定结果符号 */
-        sc = (sa == NM_ZPOS) ? NM_NEG : NM_ZPOS;
+        sc = (sa == NANMATH_ZPOS) ? NANMATH_NEG : NANMATH_ZPOS;
         c.set_sign(sc);
         
         res = s_sub(b, *this, c);
@@ -82,7 +82,7 @@ namespace nanmath {
   }
   
   int nanmath_int::sub(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NM_OK)
+    if (copy(a) != NANMATH_OK)
       return _lasterr;
     return sub(b);
   }
@@ -92,7 +92,7 @@ namespace nanmath {
     int max = a.get_used();
     
     if (c.get_alloc() < max) {
-      if (c.grow(max) != NM_OK) {
+      if (c.grow(max) != NANMATH_OK) {
         return c.get_lasterr();
       }
     }
@@ -108,17 +108,17 @@ namespace nanmath {
     for (i = 0; i < min; i++) {
       *tmpc = *tmpa++ - *tmpb++ - u;
       u = *tmpc >> ((nanmath_digit)(CHAR_BIT * sizeof(nanmath_digit) - 1)); /* u其实是最高位MSB */
-      *tmpc++ &= NM_MASK;
+      *tmpc++ &= NANMATH_MASK;
     }
     
     /* 处理高位 */
     for (; i < max; i++) {
       *tmpc -= u;
       u = *tmpc >> ((nanmath_digit)(CHAR_BIT * sizeof(nanmath_digit) - 1));
-      *tmpc++ &= NM_MASK;
+      *tmpc++ &= NANMATH_MASK;
     }
     
     c.clamp();
-    return NM_OK;
+    return NANMATH_OK;
   }
 }

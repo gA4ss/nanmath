@@ -18,7 +18,7 @@
 
 #ifdef DEBUG
 
-#define NM_32BIT
+#define NANMATH_32BIT
 
 #define NANMATH_DBG(fmt, a...)    printf("%s,%s(),%d:" fmt "/n", __FILE__,__FUNCTION__,__LINE__, ##a)
 
@@ -26,8 +26,8 @@
 
 /* x86 64位支持 */
 #if defined(__x86_64__)
-#if !defined(NM_64BIT)
-#define NM_64BIT
+#if !defined(NANMATH_64BIT)
+#define NANMATH_64BIT
 #endif
 #endif/* end __x86_64__ */
 
@@ -58,41 +58,41 @@
 #define cast_f(t,x)  ((t)(x))
 
 /* 位类型的最大值 */
-#define NM_DIGIT_BIT     DIGIT_BIT
-#define NM_MASK          ((((nanmath_digit)1)<<((nanmath_digit)DIGIT_BIT))-((nanmath_digit)1))
-#define NM_DIGIT_MAX     NM_MASK
+#define NANMATH_DIGIT_BIT     DIGIT_BIT
+#define NANMATH_MASK          ((((nanmath_digit)1)<<((nanmath_digit)DIGIT_BIT))-((nanmath_digit)1))
+#define NANMATH_DIGIT_MAX     NANMATH_MASK
 
-#define NM_LT         -1
-#define NM_EQ         0
-#define NM_GT         1
+#define NANMATH_LT         -1
+#define NANMATH_EQ         0
+#define NANMATH_GT         1
     
-#define NM_ZPOS       0
-#define NM_NEG        1
+#define NANMATH_ZPOS       0
+#define NANMATH_NEG        1
 
 /* 错误值定义 */
-#define NM_OK         0
-#define NM_MEM        -2
-#define NM_VAL        -3
-#define NM_RANGE      NM_VAL
+#define NANMATH_OK         0
+#define NANMATH_MEM        -2
+#define NANMATH_VAL        -3
+#define NANMATH_RANGE      NANMATH_VAL
     
-#define NM_YES        1   /* YES */
-#define NM_NO         0   /* NO */
+#define NANMATH_YES        1   /* YES */
+#define NANMATH_NO         0   /* NO */
 
 /* 素数的类型 */
-#define NM_PRIME_BBS      0x0001 /* BBS style prime */
-#define NM_PRIME_SAFE     0x0002 /* Safe prime (p-1)/2 == prime */
-#define NM_PRIME_2MSB_ON  0x0008 /* force 2nd MSB to 1 */
+#define NANMATH_PRIME_BBS      0x0001 /* BBS style prime */
+#define NANMATH_PRIME_SAFE     0x0002 /* Safe prime (p-1)/2 == prime */
+#define NANMATH_PRIME_2MSB_ON  0x0008 /* force 2nd MSB to 1 */
 
 /* 定义精度 */
-#ifndef NM_PREC
-#ifndef NM_LOW_MEM
-#define NM_PREC                 32          /* 默认是32位 */
+#ifndef NANMATH_PREC
+#ifndef NANMATH_LOW_MEM
+#define NANMATH_PREC                 32          /* 默认是32位 */
 #else
-#define NM_PREC                 8           /* 内存少时定义为8位 */
+#define NANMATH_PREC                 8           /* 内存少时定义为8位 */
 #endif
 #endif
 
-#define NM_WARRAY               (1 << (sizeof(nanmath_word) * CHAR_BIT - 2 * DIGIT_BIT + 1))
+#define NANMATH_WARRAY               (1 << (sizeof(nanmath_word) * CHAR_BIT - 2 * DIGIT_BIT + 1))
 
 /* 最大的缓存区长度 */
 #ifndef MAX_BUFF_SIZE
@@ -108,7 +108,7 @@ namespace nanmath {
    * 一个'nanmath_digit'最少要保证可以存储7位
    */
   
-#if !defined(NM_64BIT)
+#if !defined(NANMATH_64BIT)
   /* 32位 */
 #if defined(_MSC_VER) || defined(__BORLANDC__)
   typedef unsigned __int64    ulong64;
@@ -185,7 +185,7 @@ namespace nanmath {
     void rsle();
     int get_lasterr();
     char *get_lasterr_func();
-    int set_lasterr(int err, char *fn);
+    int set_lasterr(int err, char *fn=NULL);
     
   public:
     /* 
@@ -280,6 +280,7 @@ namespace nanmath {
     /*
      * 开方运算
      */
+    virtual int sqrt();
     
     /*
      * 比较运算
@@ -312,7 +313,6 @@ namespace nanmath {
     static int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
-    
     
     /*
      * 数据定义区域
