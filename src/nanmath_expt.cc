@@ -19,7 +19,7 @@ namespace nanmath {
       }
       
       /* 平方 */
-      if (b > 1 && ((res = c.sqr()) != NANMATH_OK)) {
+      if (b > 1 && ((res = sqr()) != NANMATH_OK)) {
         return res;
       }
       
