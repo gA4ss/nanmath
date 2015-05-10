@@ -2,62 +2,53 @@
 
 namespace nanmath {
 
-#if 0
   int nanmath_int::expt_d(nanmath_digit b) {
     int res;
-    nanmath_int g;
+    nanmath_int c;
     
-    if (g.copy(b) != NANMATH_OK) {
-      return _lasterr;
-    }
-    
-    set(cast_f(nanmath_digit, 1));
+    /* 初始化结果 */
+    c.set(cast_f(nanmath_digit, 1));
     
     while (b > 0) {
+      
+      /* 如果被置位 */
       if (b & 1) {
-        if (mul(g)) != NANMATH_OK) {
-          mp_clear (&g);
-          return res;
+        if (c.mul(*this) != NANMATH_OK) {
+          return c.get_lasterr();
         }
       }
       
-      /* square */
-      if (b > 1 && (res = mp_sqr (&g, &g)) != MP_OKAY) {
-        mp_clear (&g);
+      /* 平方 */
+      if (b > 1 && ((res = c.sqr()) != NANMATH_OK)) {
         return res;
       }
       
-      /* shift to next bit */
+      /* 右移到下一位 */
       b >>= 1;
     }
     
-    mp_clear (&g);
-    return MP_OKAY;
+    /* 复制结果 */
+    c.clamp();
+    res = copy(c);
+    
+    return res;
   }
-#endif
 
-#if 0
-  int
-  mp_2expt (mp_int * a, int b)
-  {
-    int     res;
+  int nanmath_int::bin_expt(int b) {
+    int res;
     
-    /* zero a as per default */
-    mp_zero (a);
-    
-    /* grow a to accomodate the single bit */
-    if ((res = mp_grow (a, b / DIGIT_BIT + 1)) != MP_OKAY) {
+    /* a清0 */
+    zero();
+
+    if ((res = grow(b / DIGIT_BIT + 1)) != NANMATH_OK) {
       return res;
     }
     
-    /* set the used count of where the bit will go */
-    a->used = b / DIGIT_BIT + 1;
+    /* 设置a使用的位数 */
+    _used = b / DIGIT_BIT + 1;
+    _dp[b / DIGIT_BIT] = ((nanmath_digit)1) << (b % DIGIT_BIT);
     
-    /* put the single bit in its place */
-    a->dp[b / DIGIT_BIT] = ((mp_digit)1) << (b % DIGIT_BIT);
-    
-    return MP_OKAY;
+    return NANMATH_OK;
   }
-#endif
   
 }

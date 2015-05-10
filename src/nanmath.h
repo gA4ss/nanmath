@@ -192,6 +192,7 @@ namespace nanmath {
      * 外部功能接口
      * nm_tools.cc
      */
+    virtual int setv(int index, nanmath_digit v);         /* 设置索引对应的值 */
     virtual nanmath_digit getv(int index);                /* 获取索引对应的值,如果是-1则出错 */
     virtual nanmath_digit *getp(int index);               /* 获取索引对应的值的指针,如果是NULL则出错 */
     virtual char *result(int radix=10);                   /* 打印结果,由外部释放 */
@@ -271,7 +272,8 @@ namespace nanmath {
     /*
      * 指数运算
      */
-    //virtual int expt_d(nanmath_digit b);
+    virtual int expt_d(nanmath_digit b);
+    virtual int bin_expt(int b);
     
     /*
      * 对数运算
@@ -281,6 +283,12 @@ namespace nanmath {
      * 开方运算
      */
     virtual int sqrt();
+    
+    /*
+     * 平方运算
+     */
+    virtual int sqr();
+    virtual int sqr(nanmath_int &b);
     
     /*
      * 比较运算
@@ -313,6 +321,10 @@ namespace nanmath {
     static int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
+    
+    static int karatsuba_sqr(nanmath_int &a, nanmath_int &b);
+    static int s_sqr_fast(nanmath_int &a, nanmath_int &b);
+    static int s_sqr(nanmath_int &a, nanmath_int &b);
     
     /*
      * 数据定义区域

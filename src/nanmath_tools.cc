@@ -25,6 +25,17 @@ namespace nanmath {
   /* 进制基表 */
   static const char *s_rmap = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/";
   
+  int nanmath_int::setv(int index, nanmath_digit v) {
+    nanmath_digit *p = getp(index);
+    if (p == NULL) {
+      return set_lasterr(NANMATH_VAL);
+    } else {
+      *p = (v & NANMATH_MASK);
+    }
+    
+    return NANMATH_OK;
+  }
+  
   nanmath_digit nanmath_int::getv(int index) {
     nanmath_digit *p = getp(index);
     if (p == NULL) {
@@ -35,10 +46,12 @@ namespace nanmath {
   
   nanmath_digit *nanmath_int::getp(int index) {
     if ((_used <= 0) || (_alloc <= 0) || (_dp == NULL)) {
+      set_lasterr(NANMATH_MEM);
       return NULL;
     }
     
     if ((index < 0) || (index >= _used)) {
+      set_lasterr(NANMATH_VAL);
       return NULL;
     }
     
