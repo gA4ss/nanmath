@@ -268,6 +268,9 @@ namespace nanmath {
     virtual int lsh_d(nanmath_size b);
     virtual int rsh_d(nanmath_size b);
     virtual int count_bits();                 /* 计算总共用了多少位,最高位是多少 */
+    //virtual int and(nanmath_int &b);
+    //virtual int or(nanmath_int &b);
+    //virtual int not(nanmath_int &b);
     
     /*
      * 指数运算
@@ -307,6 +310,7 @@ namespace nanmath {
     virtual int iseven();
     virtual int sodd();
     virtual int abs();
+    virtual int neg(nanmath_int &b);
     
     /*
      * 一些支持运算的底层算法

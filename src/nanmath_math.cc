@@ -34,4 +34,19 @@ namespace nanmath {
     _sign = NANMATH_ZPOS;
     return NANMATH_OK;
   }
+  
+  int nanmath_int::neg(nanmath_int &b) {
+    if (cmp(b) == NANMATH_EQ) {
+      return NANMATH_OK;
+    }
+    
+    b.copy(*this);
+    if (b.iszero() != NANMATH_OK) {
+      b.set_sign((_sign == NANMATH_ZPOS) ? NANMATH_NEG : NANMATH_ZPOS);
+    } else {
+      b.set_sign(NANMATH_ZPOS);
+    }
+    
+    return NANMATH_OK;
+  }
 }
