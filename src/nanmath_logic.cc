@@ -174,4 +174,69 @@ namespace nanmath {
     return r;
   }
   
+  int nanmath_int::and_d(nanmath_digit d) {
+    
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::and_v(nanmath_int &b) {
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::or_d(nanmath_digit d) {
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::or_v(nanmath_int &b) {
+    return NANMATH_OK;
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

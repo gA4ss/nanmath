@@ -268,8 +268,10 @@ namespace nanmath {
     virtual int lsh_d(nanmath_size b);
     virtual int rsh_d(nanmath_size b);
     virtual int count_bits();                 /* 计算总共用了多少位,最高位是多少 */
-    //virtual int and(nanmath_int &b);
-    //virtual int or(nanmath_int &b);
+    virtual int and_d(nanmath_digit d);
+    virtual int and_v(nanmath_int &b);
+    virtual int or_d(nanmath_digit d);
+    virtual int or_v(nanmath_int &b);
     //virtual int not(nanmath_int &b);
     
     /*
