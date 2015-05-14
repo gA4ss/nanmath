@@ -13,8 +13,8 @@ namespace nanmath {
       
       /* 如果被置位 */
       if (b & 1) {
-        if (c.mul(*this) != NANMATH_OK) {
-          return c.get_lasterr();
+        if ((res = c.mul(*this)) != NANMATH_OK) {
+          return res;
         }
       }
       

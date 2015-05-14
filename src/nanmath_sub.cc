@@ -6,8 +6,8 @@ namespace nanmath {
     int res, ix;
     
     if (_alloc < _used + 1) {
-      if (grow(_used + 1) != NANMATH_OK)
-        return _lasterr;
+      if ((res = grow(_used + 1)) != NANMATH_OK)
+        return res;
     }
     
     /* 如果a是负的，减去b则使用加法，最后改变符号 */
@@ -37,7 +37,7 @@ namespace nanmath {
     } else {     /* a > b */
       _sign = NANMATH_ZPOS;
       
-      /* subtract first digit */
+      /* 借位 */
       *tmpa -= b;
       mu = *tmpa >> (sizeof(nanmath_digit) * CHAR_BIT - 1);  /* 取借位 */
       *tmpa++ &= NANMATH_MASK;
@@ -82,18 +82,20 @@ namespace nanmath {
   }
   
   int nanmath_int::sub(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NANMATH_OK)
-      return _lasterr;
+    int res;
+    if ((res = copy(a)) != NANMATH_OK)
+      return res;
     return sub(b);
   }
   
   int nanmath_int::s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
+    int res;
     int min = b.get_used();
     int max = a.get_used();
     
     if (c.get_alloc() < max) {
-      if (c.grow(max) != NANMATH_OK) {
-        return c.get_lasterr();
+      if ((res = c.grow(max)) != NANMATH_OK) {
+        return res;
       }
     }
     c.zero();

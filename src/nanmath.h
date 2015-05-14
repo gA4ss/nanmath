@@ -181,11 +181,7 @@ namespace nanmath {
      * 出错处理相关
      * nanmath_error.cc
      */
-    const char * const error_to_string(int code);  /* 错误消息转换 */
-    void rsle();
-    int get_lasterr();
-    char *get_lasterr_func();
-    int set_lasterr(int err, char *fn=NULL);
+    virtual const char * const error_to_string(int code);  /* 错误消息转换 */
     
   public:
     /* 
@@ -193,9 +189,9 @@ namespace nanmath {
      * nanmath_tools.cc
      */
     virtual int setv(int index, nanmath_digit v);         /* 设置索引对应的值 */
-    virtual nanmath_digit getv(int index);                /* 获取索引对应的值,如果是-1则出错 */
-    virtual nanmath_digit *getp(int index);               /* 获取索引对应的值的指针,如果是NULL则出错 */
-    virtual char *result(int radix=10);                   /* 打印结果,由外部释放 */
+    virtual nanmath_digit getv(int index, int *ec=NULL);  /* 获取索引对应的值,如果是-1则出错 */
+    virtual nanmath_digit *getp(int index, int *ec=NULL); /* 获取索引对应的值的指针,如果是NULL则出错 */
+    virtual char *result(int radix=10, int *ec=NULL);     /* 打印结果,由外部释放 */
     virtual void clamp();                                 /* 缩减无用位 */
     virtual void spread();                                /* 保证值对应位 */
     virtual void set(nanmath_digit v);                    /* 设置单精度位 */
@@ -207,7 +203,6 @@ namespace nanmath {
     virtual int resize(int size);                         /* 清除原有内存，并分配内存 */
     virtual int shrink();                                 /* 使用位与分配位相同 */
     virtual int exch(nanmath_int &b);                     /* 交换自身与b数值 */
-    virtual int exch(nanmath_int &a, nanmath_int &b);     /* 交换a与b数值 */
     virtual void clear();                                 /* 清除内存 */
     virtual int testnull();                               /* 测试是否为空 */
     virtual unsigned long get_int();                      /* 获取nanmath_int的低32位整数 */
@@ -331,6 +326,8 @@ namespace nanmath {
      * 一些支持运算的底层算法
      */
   protected:
+    static int s_exch(nanmath_int &a, nanmath_int &b);
+    
     static int s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     static int s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
@@ -352,8 +349,6 @@ namespace nanmath {
      */
     
   protected:
-    char _funcname[MAX_BUFF_SIZE];
-    int _lasterr;      /* 最后一次错误 */
     char *_result;
     
   protected:

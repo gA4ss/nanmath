@@ -4,6 +4,7 @@ namespace nanmath {
   
   /* 向左移动2进制b位 */
   int nanmath_int::lsh(nanmath_size b) {
+    int res;
     if (b <= 0) {
       return NANMATH_OK;
     }
@@ -11,15 +12,15 @@ namespace nanmath {
     nanmath_size d = b / DIGIT_BIT;/* 有多少个位精度 */
     nanmath_size g = (nanmath_size)(_used + d + 1);
     if (_alloc < g) {
-      if (grow(g) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = grow(g)) != NANMATH_OK) {
+        return res;
       }
     }
     
     /* 首先移动整数倍 */
     if (d > 0) {
-      if (lsh_d(d) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = lsh_d(d)) != NANMATH_OK) {
+        return res;
       }
     }
     
@@ -54,6 +55,7 @@ namespace nanmath {
   }
   
   int nanmath_int::rsh(nanmath_size b) {
+    int res;
     /* 不用移动 */
     if (b <= 0) {
       return NANMATH_OK;
@@ -63,8 +65,8 @@ namespace nanmath {
     
     /* 先移动整的 */
     if (d > 0) {
-      if (rsh_d(d) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = rsh_d(d)) != NANMATH_OK) {
+        return res;
       }
     }
     
@@ -97,13 +99,14 @@ namespace nanmath {
   
   /* 左移精度b位 */
   int nanmath_int::lsh_d(nanmath_size b) {
+    int res;
     if (b <= 0) {
       return NANMATH_OK;
     }
     
     if (_alloc < _used + b) {
-      if (grow(_used + b) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = grow(_used + b)) != NANMATH_OK) {
+        return res;
       }
     }
     

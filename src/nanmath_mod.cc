@@ -117,9 +117,9 @@ namespace nanmath {
     
     /* b必须是奇数 */
     if (b.iseven()) {
-      return b.set_lasterr(NANMATH_VAL);
+      return NANMATH_VAL;
     }
-    
+#if 0
     /* x 等于 模数, y == 余数 */
     if ((res = mp_copy (b, &x)) != MP_OKAY) {
       goto LBL_ERR;
@@ -224,6 +224,8 @@ namespace nanmath {
     
   LBL_ERR:mp_clear_multi (&x, &y, &u, &v, &B, &D, NULL);
     return res;
+#endif
+    return 0;
   }
   
   

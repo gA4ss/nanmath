@@ -3,13 +3,13 @@
 namespace nanmath {
   
   int nanmath_int::add_d(nanmath_digit b) {
-    int ix, oldused;
+    int ix, oldused, res;
     nanmath_digit *tmp, mu;
     nanmath_word x;
 
     if (_alloc < _used + 1) {
-      if (grow(_used + 1) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = grow(_used + 1)) != NANMATH_OK) {
+        return res;
       }
     }
     
@@ -20,7 +20,7 @@ namespace nanmath {
       sub_d(b);
       _sign = NANMATH_NEG;
       clamp();
-      return _lasterr;
+      return NANMATH_OK;
     }
     
     oldused = _used;
@@ -95,14 +95,15 @@ namespace nanmath {
   }
   
   int nanmath_int::add(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NANMATH_OK)
-      return _lasterr;
+    int res;
+    if ((res = copy(a)) != NANMATH_OK)
+      return res;
     return add(b);
   }
   
   int nanmath_int::s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
     nanmath_int *x = NULL;
-    int min, max;
+    int min, max, res;
     
     /* 求出位数大的那一个，并且让x指向它 */
     if (a.get_used() > b.get_used()) {
@@ -117,8 +118,8 @@ namespace nanmath {
     
     /* 初始化结果 */
     if (c.get_alloc() < max + 1) {
-      if (c.grow(max + 1) != NANMATH_OK) {
-        return c.get_lasterr();
+      if ((res = c.grow(max + 1)) != NANMATH_OK) {
+        return res;
       }
     }
     c.zero();

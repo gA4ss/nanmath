@@ -3,9 +3,10 @@
 namespace nanmath {
   /* 乘以2 */
   int nanmath_int::mul_2() {
+    int res;
     /* 为了防止溢出增加一位 */
-    if (grow(_used + 1) != NANMATH_OK) {
-      return _lasterr;
+    if ((res = grow(_used + 1)) != NANMATH_OK) {
+      return res;
     }
     
     nanmath_digit r, rr, *tmp;
@@ -39,10 +40,11 @@ namespace nanmath {
   
   /* 乘以一个单精度位 */
   int nanmath_int::mul_d(nanmath_digit b) {
+    int res;
     /* 确定有足够空间存放 a * b */
     if (_alloc < _used + 1) {
-      if (grow(_used + 1) != NANMATH_OK) {
-        return _lasterr;
+      if ((res = grow(_used + 1)) != NANMATH_OK) {
+        return res;
       }
     }
     
@@ -102,8 +104,9 @@ namespace nanmath {
   }
   
   int nanmath_int::mul(nanmath_int &a, nanmath_int &b) {
-    if (copy(a) != NANMATH_OK)
-      return _lasterr;
+    int res;
+    if ((res = copy(a)) != NANMATH_OK)
+      return res;
     return mul(b);
   }
   
@@ -239,7 +242,7 @@ namespace nanmath {
   /* 计算|a| * |b|并且只计算到digits位 */
   int nanmath_int::s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     nanmath_int t;
-    int pa, pb, ix, iy;
+    int pa, pb, ix, iy, res;
     nanmath_digit u;
     nanmath_word r;
     nanmath_digit tmpx, *tmpt, *tmpy, *tmpa;
@@ -252,8 +255,8 @@ namespace nanmath {
     }
     
     /* 临时结果位 */
-    if (t.allocs(digs) != NANMATH_OK) {
-      return t.get_lasterr();
+    if ((res = t.allocs(digs)) != NANMATH_OK) {
+      return res;
     }
     t.set_used(digs);
     
@@ -285,13 +288,12 @@ namespace nanmath {
     }
     
     t.clamp();
-    t.exch(c);
-    return NANMATH_OK;
+    return c.copy(t);
   }
 
   int nanmath_int::s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     nanmath_int t;
-    int pa, pb, ix, iy;
+    int pa, pb, ix, iy, res;
     nanmath_digit u;
     nanmath_word r;
     nanmath_digit tmpx, *tmpt, *tmpy, *tmpa;
@@ -303,8 +305,8 @@ namespace nanmath {
       return s_mul_high_digs_(a, b, c, digs);
     }
     
-    if (t.allocs(a.get_used() + b.get_used() + 1) != NANMATH_OK) {
-      return t.get_lasterr();
+    if ((res = t.allocs(a.get_used() + b.get_used() + 1)) != NANMATH_OK) {
+      return res;
     }
     t.set_used(a.get_used() + b.get_used() + 1);
     
@@ -326,18 +328,17 @@ namespace nanmath {
       *tmpt = u;
     }
     t.clamp();
-    t.exch(c);
-    return NANMATH_OK;
+    return c.copy(t);
   }
   
   /* Based on Algorithm 14.12 on pp.595 of HAC. */
   int nanmath_int::s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
-    int ix, iz;
+    int ix, iz, res;
     nanmath_digit W[NANMATH_WARRAY];        /* 存放最终结果 */
     
     if (c.get_alloc() < digs) {
-      if (c.grow(digs) != NANMATH_OK) {
-        return c.get_lasterr();
+      if ((res = c.grow(digs)) != NANMATH_OK) {
+        return res;
       }
     }
     
@@ -398,13 +399,13 @@ namespace nanmath {
 
   /* 直接从digs位相乘 */
   int nanmath_int::s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
-    int ix, iz;
+    int ix, iz, res;
     nanmath_digit W[NANMATH_WARRAY];
     
     int pa = a.get_used() + b.get_used();
     if (c.get_alloc() < pa) {
-      if (c.grow(pa) != NANMATH_OK) {
-        return c.get_lasterr();
+      if ((res = c.grow(pa)) != NANMATH_OK) {
+        return res;
       }
     }
     

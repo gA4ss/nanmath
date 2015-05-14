@@ -10,7 +10,7 @@ namespace nanmath {
   void nanmath_int::init() {
     _dp = cast(nanmath_digit, nm_malloc(sizeof(nanmath_digit) * NANMATH_PREC));
     if (_dp == NULL) {
-      set_lasterr(NANMATH_MEM, cast_f(char*, __FUNCTION__));
+      /* 这里抛出异常 */
       return;
     }
     
@@ -21,8 +21,6 @@ namespace nanmath {
     _used = 1;
     _alloc = NANMATH_PREC;
     _sign = NANMATH_ZPOS;
-    _lasterr = NANMATH_OK;
-    memset(_funcname, 0, MAX_BUFF_SIZE);
     _result = NULL;
     
     /* 设定karatsuba算法的阀值 */

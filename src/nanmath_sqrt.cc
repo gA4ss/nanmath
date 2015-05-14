@@ -8,7 +8,7 @@ namespace nanmath {
   
     /* 必须是正数 */
     if (_sign == NANMATH_NEG) {
-      return set_lasterr(NANMATH_VAL, cast_f(char*, __FUNCTION__));
+      return NANMATH_VAL;
     }
   
     /* 非零 */

@@ -28,7 +28,7 @@ namespace nanmath {
   int nanmath_int::setv(int index, nanmath_digit v) {
     nanmath_digit *p = getp(index);
     if (p == NULL) {
-      return set_lasterr(NANMATH_VAL);
+      return NANMATH_VAL;
     } else {
       *p = (v & NANMATH_MASK);
     }
@@ -36,22 +36,23 @@ namespace nanmath {
     return NANMATH_OK;
   }
   
-  nanmath_digit nanmath_int::getv(int index) {
+  nanmath_digit nanmath_int::getv(int index, int *ec) {
     nanmath_digit *p = getp(index);
     if (p == NULL) {
-      return (nanmath_digit)-1;
+      if (ec) *ec = NANMATH_VAL;
+      return (nanmath_digit)0;
     }
     return cast_f(nanmath_digit, ((*p) & NANMATH_MASK));
   }
   
-  nanmath_digit *nanmath_int::getp(int index) {
+  nanmath_digit *nanmath_int::getp(int index, int *ec) {
     if ((_used <= 0) || (_alloc <= 0) || (_dp == NULL)) {
-      set_lasterr(NANMATH_MEM);
+      if (ec) *ec = NANMATH_MEM;
       return NULL;
     }
     
     if ((index < 0) || (index >= _used)) {
-      set_lasterr(NANMATH_VAL);
+      if (ec) *ec = NANMATH_VAL;
       return NULL;
     }
     
@@ -60,9 +61,9 @@ namespace nanmath {
   
   /* 输出结果,pstr指向的值，如果为空则分配内存，不为空直接释放空间
    */
-  char *nanmath_int::result(int radix) {
+  char *nanmath_int::result(int radix, int *ec) {
     if (radix < 2 || radix > 64) {
-      set_lasterr(NANMATH_VAL, cast_f(char*, __FUNCTION__));
+      if (ec) *ec = NANMATH_VAL;
       return NULL;
     }
     
@@ -78,7 +79,7 @@ namespace nanmath {
     
     char *r_str = cast(char, nm_malloc(_used * DIGIT_BIT + 1));
     if (r_str == NULL) {
-      set_lasterr(NANMATH_MEM, cast_f(char*, __FUNCTION__));
+      if (ec) *ec = NANMATH_MEM;
       return NULL;
     }
     _result = r_str;
@@ -148,11 +149,11 @@ namespace nanmath {
   }
   
   int nanmath_int::set_s(const char *str, int radix) {
-    int y, neg;
+    int y, neg, res;
     char ch;
     
     if (radix < 2 || radix > 64) {
-      return set_lasterr(NANMATH_VAL, cast_f(char*, __FUNCTION__));
+      return NANMATH_VAL;
     }
     
     /* 清0 */
@@ -180,12 +181,12 @@ namespace nanmath {
       
       /* y必须小于基数 */
       if (y < radix) {
-        if (mul_d(cast_f(nanmath_digit, radix)) != NANMATH_OK) {
-          return _lasterr;
+        if ((res = mul_d(cast_f(nanmath_digit, radix))) != NANMATH_OK) {
+          return res;
         }
         
-        if (add_d(cast_f(nanmath_digit, y)) != NANMATH_OK) {
-          return _lasterr;
+        if ((res = add_d(cast_f(nanmath_digit, y))) != NANMATH_OK) {
+          return res;
         }
       } else {
         /* 非法字符 */
@@ -209,7 +210,7 @@ namespace nanmath {
       size += (NANMATH_PREC * 2) - (size % NANMATH_PREC);
       nanmath_digit *tmp = cast(nanmath_digit, nm_realloc(_dp, sizeof(nanmath_digit) * size));
       if (tmp == NULL) {
-        return set_lasterr(NANMATH_MEM, cast_f(char*, __FUNCTION__));
+        return NANMATH_MEM;
       }
       
       _dp = tmp;
@@ -225,11 +226,12 @@ namespace nanmath {
 
   /* 将d的信息设置到自身中 */
   int nanmath_int::copy(nanmath_int &d) {
+    int res;
     /* 目标缓存不够 */
     int d_used = d.get_used();
     if (_alloc < d_used) {
-      if (grow(d_used) != NANMATH_OK)
-        return _lasterr;
+      if ((res = grow(d_used)) != NANMATH_OK)
+        return res;
     }
     
     nanmath_digit *tmpa = _dp;
@@ -254,10 +256,11 @@ namespace nanmath {
   
   /* 将自身信息设置到d中 */
   int nanmath_int::paste(nanmath_int &d) {
+    int res;
     /* 目标缓存不够 */
     if (d.get_alloc() < _used) {
-     if (d.grow(_used) != NANMATH_OK)
-        return _lasterr;
+     if ((res = d.grow(_used)) != NANMATH_OK)
+        return res;
     }
     
     nanmath_digit *tmpa, *tmpb;
@@ -285,7 +288,7 @@ namespace nanmath {
     size += (NANMATH_PREC * 2) - (size % NANMATH_PREC);
     _dp = cast(nanmath_digit, nm_malloc(sizeof(nanmath_digit) * size));
     if (_dp == NULL) {
-      return set_lasterr(NANMATH_MEM, cast_f(char*, __FUNCTION__));
+      return NANMATH_MEM;
     }
     
     zero();
@@ -297,8 +300,7 @@ namespace nanmath {
     size += (NANMATH_PREC * 2) - (size % NANMATH_PREC);
     _dp = cast(nanmath_digit, nm_realloc(_dp, sizeof(nanmath_digit) * size));
     if (_dp == NULL) {
-      set_lasterr(NANMATH_MEM, cast_f(char*, __FUNCTION__));
-      return _lasterr;
+      return NANMATH_MEM;
     }
 
     _alloc = size;
@@ -326,19 +328,15 @@ namespace nanmath {
   }
   
   int nanmath_int::exch(nanmath_int &b) {
-    nanmath_int t;
-    if (t.copy(*this) != NANMATH_OK) return _lasterr;
-    if (copy(b) != NANMATH_OK) return _lasterr;
-    if (b.copy(t) != NANMATH_OK) return _lasterr;
-
-    return NANMATH_OK;
+    return s_exch(*this, b);
   }
   
-  int nanmath_int::exch(nanmath_int &a, nanmath_int &b) {
+  int nanmath_int::s_exch(nanmath_int &a, nanmath_int &b) {
+    int res;
     nanmath_int t;
-    if (t.copy(a) != NANMATH_OK) return _lasterr;
-    if (a.copy(b) != NANMATH_OK) return _lasterr;
-    if (b.copy(t) != NANMATH_OK) return _lasterr;
+    if ((res = t.copy(a)) != NANMATH_OK) return res;
+    if ((res = a.copy(b)) != NANMATH_OK) return res;
+    if ((res = b.copy(t)) != NANMATH_OK) return res;
 
     return NANMATH_OK;
   }

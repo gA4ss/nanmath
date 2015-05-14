@@ -22,6 +22,10 @@ namespace nanmath {
     return "Invalid error code";
   }
   
+#if 0
+  /*
+   * 基本无意义
+   */
   int nanmath_int::get_lasterr() {
     return _lasterr;
   }
@@ -42,4 +46,5 @@ namespace nanmath {
       strcpy(_funcname, fn);
     return err;
   }
+#endif
 }
