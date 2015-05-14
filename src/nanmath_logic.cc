@@ -174,24 +174,116 @@ namespace nanmath {
     return r;
   }
   
+  static const int lnz[16] = {
+    4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0
+  };
+  int nanmath_int::count_lsb() {
+    int x;
+    nanmath_digit qq;
+    
+    if (iszero())
+      return 0;
+    
+    /* 遍历低位，直到一个位不为0 */
+    for (x = 0; x < _used && _dp[x] == 0; x++);
+    nanmath_digit q = _dp[x];
+    x *= DIGIT_BIT;
+    
+    /* 扫描精度位中的二进制位情况
+     * 4位递进
+     */
+    if ((q & 1) == 0) {
+      do {
+        qq = q & 0x0F;
+        x  += lnz[qq];
+        q >>= 4;
+      } while (qq == 0);
+    }
+    return x;
+  }
+  
   int nanmath_int::and_d(nanmath_digit d) {
+    if (iszero()) {
+      return NANMATH_OK;
+    }
+    
+    _dp[0] &= d;
     
     return NANMATH_OK;
   }
   
   int nanmath_int::and_v(nanmath_int &b) {
-    return NANMATH_OK;
+    int res, ix, px;
+    nanmath_int t, *x;
+    
+    if (_used > b.get_used()) {
+      if ((res = t.copy(*this)) != NANMATH_OK) {
+        return res;
+      }
+      px = b.get_used();
+      x = &b;
+    } else {
+      if ((res = t.copy(b)) != NANMATH_OK) {
+        return res;
+      }
+      px = _used;
+      x = this;
+    }
+    
+    nanmath_digit *tmp = cast(nanmath_digit, t.get_digit());
+    for (ix = 0; ix < px; ix++) {
+      tmp[ix] &= x->getv(ix);
+    }
+    
+    for (; ix < t.get_used(); ix++) {
+      tmp[ix] = 0;
+    }
+    
+    t.clamp();
+    return copy(t);
   }
   
   int nanmath_int::or_d(nanmath_digit d) {
+    if (iszero()) {
+      return NANMATH_OK;
+    }
+    
+    _dp[0] |= d;
+    
     return NANMATH_OK;
   }
   
   int nanmath_int::or_v(nanmath_int &b) {
-    return NANMATH_OK;
+    int res, ix, px;
+    nanmath_int t, *x;
+    
+    if (_used > b.get_used()) {
+      if ((res = t.copy(*this)) != NANMATH_OK) {
+        return res;
+      }
+      px = b.get_used();
+      x = &b;
+    } else {
+      if ((res = t.copy(b)) != NANMATH_OK) {
+        return res;
+      }
+      px = _used;
+      x = this;
+    }
+    
+    nanmath_digit *tmp = cast(nanmath_digit, t.get_digit());
+    for (ix = 0; ix < px; ix++) {
+      tmp[ix] |= x->getv(ix);
+    }
+    
+    for (; ix < t.get_used(); ix++) {
+      tmp[ix] = 0;
+    }
+    
+    t.clamp();
+    return copy(t);
   }
 }
-
 
 
 

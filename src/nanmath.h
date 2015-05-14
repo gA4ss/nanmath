@@ -141,7 +141,7 @@ namespace nanmath {
   public:
     /*
      * 初始化函数
-     * nm_construct.cc
+     * nanmath_int.cc
      */
     nanmath_int();
     nanmath_int(nanmath_digit v);
@@ -169,7 +169,7 @@ namespace nanmath {
   public:
     /*
      * 内存相关函数
-     * nm_memory.cc
+     * nanmath_memory.cc
      */
     virtual void *nm_calloc(size_t count, size_t size);
     virtual void nm_free(void *ptr);
@@ -179,7 +179,7 @@ namespace nanmath {
   public:
     /*  
      * 出错处理相关
-     * nm_error.cc
+     * nanmath_error.cc
      */
     const char * const error_to_string(int code);  /* 错误消息转换 */
     void rsle();
@@ -190,7 +190,7 @@ namespace nanmath {
   public:
     /* 
      * 外部功能接口
-     * nm_tools.cc
+     * nanmath_tools.cc
      */
     virtual int setv(int index, nanmath_digit v);         /* 设置索引对应的值 */
     virtual nanmath_digit getv(int index);                /* 获取索引对应的值,如果是-1则出错 */
@@ -210,6 +210,7 @@ namespace nanmath {
     virtual int exch(nanmath_int &a, nanmath_int &b);     /* 交换a与b数值 */
     virtual void clear();                                 /* 清除内存 */
     virtual int testnull();                               /* 测试是否为空 */
+    virtual unsigned long get_int();                      /* 获取nanmath_int的低32位整数 */
     
   protected:
     void reverse_mem(unsigned char *s, int len);
@@ -223,7 +224,7 @@ namespace nanmath {
     
     /*
      * 加法单元
-     * nm_add.cc
+     * nanmath_add.cc
      */
     virtual int add_d(nanmath_digit b);
     virtual int add(nanmath_int &b);
@@ -231,7 +232,7 @@ namespace nanmath {
     
     /*
      * 减法单元
-     * nm_sub.cc
+     * nanmath_sub.cc
      */
     virtual int sub_d(nanmath_digit b);
     virtual int sub(nanmath_int &b);
@@ -239,7 +240,7 @@ namespace nanmath {
     
     /*
      * 乘法单元
-     * nm_mul.cc
+     * nanmath_mul.cc
      */
     virtual int mul_2();
     virtual int mul_d(nanmath_digit b);
@@ -248,7 +249,7 @@ namespace nanmath {
     
     /*
      * 除法单元
-     * nm_div.cc
+     * nanmath_div.cc
      */
     virtual int div_2();
     virtual int div_d(nanmath_digit v, nanmath_digit *r=NULL);
@@ -257,8 +258,17 @@ namespace nanmath {
     
     /*
      * 取模单元
-     * nm_mod.cc
+     * nanmath_mod.cc
      */
+    virtual int mod_2x(nanmath_digit v);
+    virtual int mod_d(nanmath_digit v, nanmath_digit *r=NULL);
+    virtual int mod(nanmath_int &v);
+    virtual int mod(nanmath_int &a, nanmath_int &b);
+    virtual int addmod(nanmath_int &b, nanmath_int &c);
+    virtual int addmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    virtual int invmod(nanmath_int &b, nanmath_int &c);
+    virtual int invmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    //virtual int exptmod(nanmath_int G, mp_int * X, mp_int * P, mp_int * Y);
     
     /*
      * 逻辑运算
@@ -268,6 +278,7 @@ namespace nanmath {
     virtual int lsh_d(nanmath_size b);
     virtual int rsh_d(nanmath_size b);
     virtual int count_bits();                 /* 计算总共用了多少位,最高位是多少 */
+    virtual int count_lsb();
     virtual int and_d(nanmath_digit d);
     virtual int and_v(nanmath_int &b);
     virtual int or_d(nanmath_digit d);
@@ -286,18 +297,20 @@ namespace nanmath {
     
     /*
      * 开方运算
+     * nanmath_sqrt.cc
      */
     virtual int sqrt();
     
     /*
      * 平方运算
+     * nanmath_sqr.cc
      */
     virtual int sqr();
     virtual int sqr(nanmath_int &b);
     
     /*
      * 比较运算
-     * nm_cmp.cc
+     * nanmath_cmp.cc
      */
     virtual int cmp(nanmath_int &b);
     virtual int cmp_d(nanmath_digit b);
@@ -305,12 +318,12 @@ namespace nanmath {
     
     /*
      * 数学辅助
-     * nm_math.cc
+     * nanmath_math.cc
      */
     virtual void zero();
     virtual int iszero();
     virtual int iseven();
-    virtual int sodd();
+    virtual int isodd();
     virtual int abs();
     virtual int neg(nanmath_int &b);
     
@@ -331,6 +344,8 @@ namespace nanmath {
     static int karatsuba_sqr(nanmath_int &a, nanmath_int &b);
     static int s_sqr_fast(nanmath_int &a, nanmath_int &b);
     static int s_sqr(nanmath_int &a, nanmath_int &b);
+    
+    static int s_invmod_fast(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
     /*
      * 数据定义区域

@@ -378,4 +378,58 @@ namespace nanmath {
     }
   }
   
+  unsigned long nanmath_int::get_int() {
+    unsigned long res;
+    
+    if (_used == 0) {
+      return 0;
+    }
+    
+    /* 获取我们已经读取的lsb位数量 */
+    int i = MIN(_used,
+                (int)((sizeof(unsigned long)*CHAR_BIT+DIGIT_BIT-1)/DIGIT_BIT))-1;
+    
+    res = _dp[i];
+    
+    while (--i >= 0) {
+      res = ((res << DIGIT_BIT) | _dp[i]);
+    }
+    
+    return res & 0xFFFFFFFFUL;
+  }
+  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

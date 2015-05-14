@@ -26,7 +26,7 @@ namespace nanmath {
     return ((_used > 0 && ((_dp[0] & 1) == 0)) ? NANMATH_YES : NANMATH_NO);
   }
   
-  int nanmath_int::sodd() {
+  int nanmath_int::isodd() {
     return ((_used > 0 && ((_dp[0] & 1) == 1)) ? NANMATH_YES : NANMATH_NO);
   }
  
