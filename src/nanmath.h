@@ -261,8 +261,8 @@ namespace nanmath {
     virtual int mod(nanmath_int &a, nanmath_int &b);
     virtual int addmod(nanmath_int &b, nanmath_int &c);
     virtual int addmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
-    virtual int invmod(nanmath_int &b, nanmath_int &c);
-    virtual int invmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    virtual int invmod(nanmath_int &b);
+    virtual int invmod(nanmath_int &a, nanmath_int &b);
     //virtual int exptmod(nanmath_int G, mp_int * X, mp_int * P, mp_int * Y);
     
     /*
@@ -309,7 +309,6 @@ namespace nanmath {
      */
     virtual int cmp(nanmath_int &b);
     virtual int cmp_d(nanmath_digit b);
-    virtual int cmp_mag(nanmath_int &a, nanmath_int &b);
     
     /*
      * 数学辅助
@@ -325,15 +324,17 @@ namespace nanmath {
     /*
      * 一些支持运算的底层算法
      */
-  protected:
+  public:
     static int s_exch(nanmath_int &a, nanmath_int &b);
+    
+    static int s_cmp_mag(nanmath_int &a, nanmath_int &b);
     
     static int s_add(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     static int s_sub(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
     static int karatsuba_mul(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     static int s_mul_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
-    #define s_mul(a, b, c) s_mul_digs(a, b, c, (a).get_used() + (b).get_used() + 1)
+    static int s_mul(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     static int s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
     static int s_mul_high_digs_(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs);
@@ -343,6 +344,7 @@ namespace nanmath {
     static int s_sqr(nanmath_int &a, nanmath_int &b);
     
     static int s_invmod_fast(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    static int s_invmod_slow(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     
     /*
      * 数据定义区域

@@ -80,7 +80,7 @@ namespace nanmath {
     if (sa == sb) {   /* 符号相同 */
       res = s_add(*this, b, c);
     } else {
-      if (cmp_mag(*this, b) == NANMATH_LT) { /* a < b */
+      if (s_cmp_mag(*this, b) == NANMATH_LT) { /* a < b */
         _sign = sb;
         res = s_sub(b, *this, c);       /* b - a */
       } else {                          /* a >= b */

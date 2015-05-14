@@ -290,6 +290,10 @@ namespace nanmath {
     t.clamp();
     return c.copy(t);
   }
+  
+  int nanmath_int::s_mul(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
+    return s_mul_digs(a, b, c, a.get_used() + b.get_used() + 1);
+  }
 
   int nanmath_int::s_mul_high_digs(nanmath_int &a, nanmath_int &b, nanmath_int &c, int digs) {
     nanmath_int t;

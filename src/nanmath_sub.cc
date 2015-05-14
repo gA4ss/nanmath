@@ -65,7 +65,7 @@ namespace nanmath {
     if (sa != sb) {
       res = s_add(*this, b, c);
     } else {
-      if (cmp_mag(*this, b) != NANMATH_LT) {   /* a >= b */
+      if (s_cmp_mag(*this, b) != NANMATH_LT) {   /* a >= b */
         res = s_sub(*this, b, c);
       } else {        /* a < b */
         /* 设定结果符号 */

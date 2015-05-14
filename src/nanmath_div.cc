@@ -112,7 +112,7 @@ namespace nanmath {
     }
     
     /* 如果被除数小于除数,则商为0,余数等于被除数 */
-    if (cmp_mag(*this, v) == NANMATH_LT) {
+    if (s_cmp_mag(*this, v) == NANMATH_LT) {
       
       if (r.testnull() == 0) {
         if ((res = r.copy(*this)) != NANMATH_OK)
@@ -260,9 +260,9 @@ namespace nanmath {
         *(t2.getp(0)) = (i - 2 < 0) ? 0 : x.getv(i - 2);
         *(t2.getp(1)) = (i - 1 < 0) ? 0 : x.getv(i - 1);
         *(t2.getp(2)) = x.getv(i);
-      } while (cmp_mag(t1, t2) == NANMATH_GT); /* while (t1 > t2) 
-                                           * 保证被除数大于除数
-                                           */
+      } while (s_cmp_mag(t1, t2) == NANMATH_GT); /* while (t1 > t2)
+                                                  * 保证被除数大于除数
+                                                  */
       
       /* 到这里，被除数就小于余数了
        * 重新设置t1为原始被除数 然后 乘上 当前的商

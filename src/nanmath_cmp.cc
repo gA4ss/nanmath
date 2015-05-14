@@ -11,9 +11,9 @@ namespace nanmath {
     }
     
     if (_sign == NANMATH_NEG) {
-      return cmp_mag(b, *this);
+      return s_cmp_mag(b, *this);
     } else {
-      return cmp_mag(*this, b);
+      return s_cmp_mag(*this, b);
     }
   }
   
@@ -35,7 +35,7 @@ namespace nanmath {
     }
   }
   
-  int nanmath_int::cmp_mag (nanmath_int &a, nanmath_int &b) {
+  int nanmath_int::s_cmp_mag(nanmath_int &a, nanmath_int &b) {
     if (a.get_used() > b.get_used()) {
       return NANMATH_GT;
     }

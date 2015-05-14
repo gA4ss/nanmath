@@ -88,29 +88,28 @@ namespace nanmath {
     return NANMATH_OK;
   }
 
-  int nanmath_int::invmod(nanmath_int &b, nanmath_int &c) {
+  int nanmath_int::invmod(nanmath_int &b) {
     if (b.get_sign() == NANMATH_NEG || b.iszero()) {
       return NANMATH_VAL;
     }
     
     /* 如果模数是奇数 */
     if (b.isodd()) {
-      return s_invmod_fast(*this, b, c);
-    } else {
-      
+      return s_invmod_fast(*this, b, *this);
     }
     
-    return NANMATH_OK;
+    return s_invmod_slow(*this, b, *this);
   }
   
-  int nanmath_int::invmod(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
+  int nanmath_int::invmod(nanmath_int &a, nanmath_int &b) {
     int res;
     if ((res = copy(a)) != NANMATH_OK)
       return res;
     
-    return invmod(b, c);
+    return invmod(b);
   }
   
+  /* 计算模逆使用二分扩展欧几里德算法, c = 1/a mod b */
   int nanmath_int::s_invmod_fast(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
     nanmath_int x, y, u, v, B, D;
     int res, neg;
@@ -119,114 +118,254 @@ namespace nanmath {
     if (b.iseven()) {
       return NANMATH_VAL;
     }
-#if 0
+
     /* x 等于 模数, y == 余数 */
-    if ((res = mp_copy (b, &x)) != MP_OKAY) {
-      goto LBL_ERR;
+    if ((res = x.copy(b)) != NANMATH_OK) {
+      return res;
     }
     
-    /* we need y = |a| */
-    if ((res = mp_mod (a, b, &y)) != MP_OKAY) {
-      goto LBL_ERR;
+    /* y = |a| */
+    if ((res = y.mod(a, b)) != NANMATH_OK) {
+      return res;
     }
     
-    /* 3. u=x, v=y, A=1, B=0, C=0,D=1 */
-    if ((res = mp_copy (&x, &u)) != MP_OKAY) {
-      goto LBL_ERR;
+    /* u=x, v=y, A=1, B=0, C=0, D=1 */
+    if ((res = u.copy(x)) != NANMATH_OK) {
+      return res;
     }
-    if ((res = mp_copy (&y, &v)) != MP_OKAY) {
-      goto LBL_ERR;
+    if ((res = v.copy(y)) != NANMATH_OK) {
+      return res;
     }
-    mp_set (&D, 1);
+    D.set(1);
     
   top:
-    /* 4.  while u is even do */
-    while (mp_iseven (&u) == 1) {
-      /* 4.1 u = u/2 */
-      if ((res = mp_div_2 (&u, &u)) != MP_OKAY) {
-        goto LBL_ERR;
+    /* 当u是偶数 */
+    while (u.iseven() == 1) {
+      /* u = u/2 */
+      if ((res = u.div_2()) != NANMATH_OK) {
+        return res;
       }
-      /* 4.2 if B is odd then */
-      if (mp_isodd (&B) == 1) {
-        if ((res = mp_sub (&B, &x, &B)) != MP_OKAY) {
-          goto LBL_ERR;
+      /* 如果 B 是奇数 */
+      if (B.isodd()) {
+        if ((res = B.sub(x)) != NANMATH_OK) {
+          return res;
         }
       }
       /* B = B/2 */
-      if ((res = mp_div_2 (&B, &B)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = B.div_2()) != NANMATH_OK) {
+        return res;
       }
     }
     
-    /* 5.  while v is even do */
-    while (mp_iseven (&v) == 1) {
-      /* 5.1 v = v/2 */
-      if ((res = mp_div_2 (&v, &v)) != MP_OKAY) {
-        goto LBL_ERR;
+    /* 当 v 是偶数 */
+    while (v.iseven()) {
+      /* v = v/2 */
+      if ((res = v.div_2()) != NANMATH_OK) {
+        return res;
       }
-      /* 5.2 if D is odd then */
-      if (mp_isodd (&D) == 1) {
+      /* 如果 D 是奇数 */
+      if (D.isodd()) {
         /* D = (D-x)/2 */
-        if ((res = mp_sub (&D, &x, &D)) != MP_OKAY) {
-          goto LBL_ERR;
+        if ((res = D.sub(x)) != NANMATH_OK) {
+          return res;
         }
       }
       /* D = D/2 */
-      if ((res = mp_div_2 (&D, &D)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = D.div_2()) != NANMATH_OK) {
+        return res;
       }
     }
     
-    /* 6.  if u >= v then */
-    if (mp_cmp (&u, &v) != MP_LT) {
+    /* 如果 u >= v */
+    if (u.cmp(v) != NANMATH_LT) {
       /* u = u - v, B = B - D */
-      if ((res = mp_sub (&u, &v, &u)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = u.sub(v)) != NANMATH_OK) {
+        return res;
       }
       
-      if ((res = mp_sub (&B, &D, &B)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = B.sub(D)) != NANMATH_OK) {
+        return res;
       }
     } else {
       /* v - v - u, D = D - B */
-      if ((res = mp_sub (&v, &u, &v)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = v.sub(u)) != NANMATH_OK) {
+        return res;
       }
       
-      if ((res = mp_sub (&D, &B, &D)) != MP_OKAY) {
-        goto LBL_ERR;
+      if ((res = D.sub(B)) != NANMATH_OK) {
+        return res;
       }
     }
     
-    /* if not zero goto step 4 */
-    if (mp_iszero (&u) == 0) {
+    /* 如果不是0则返回top */
+    if (u.iszero() == 0) {
       goto top;
     }
     
-    /* now a = C, b = D, gcd == g*v */
+    /* 现在 a = C, b = D, gcd == g*v */
     
-    /* if v != 1 then there is no inverse */
-    if (mp_cmp_d (&v, 1) != MP_EQ) {
-      res = MP_VAL;
-      goto LBL_ERR;
+    /* 如果 v != 1 则没有逆 */
+    if (v.cmp_d(1) != NANMATH_EQ) {
+      return NANMATH_VAL;
     }
     
-    /* b is now the inverse */
-    neg = a->sign;
-    while (D.sign == MP_NEG) {
-      if ((res = mp_add (&D, b, &D)) != MP_OKAY) {
-        goto LBL_ERR;
+    /* b 现在是逆 */
+    neg = a.get_sign();
+    while (D.get_sign() == NANMATH_NEG) {
+      if ((res = D.add(b)) != NANMATH_OK) {
+        return res;
       }
     }
-    mp_exch (&D, c);
-    c->sign = neg;
-    res = MP_OKAY;
     
-  LBL_ERR:mp_clear_multi (&x, &y, &u, &v, &B, &D, NULL);
+    if ((res = c.copy(D)) != NANMATH_OK) {
+      return res;
+    }
+    c.set_sign(neg);
+    
     return res;
-#endif
-    return 0;
   }
+  
+  /* hac 14.61, pp608 */
+  int nanmath_int::s_invmod_slow(nanmath_int &a, nanmath_int &b, nanmath_int &c) {
+    nanmath_int x, y, u, v, A, B, C, D;
+    int res;
+    
+    /* b 不能为 负 */
+    if (b.get_sign() == NANMATH_NEG || b.iszero()) {
+      return NANMATH_VAL;
+    }
+    
+    /* x = a, y = b */
+    if ((res = x.mod(a, b)) != NANMATH_OK) {
+      return res;
+    }
+    if ((res = y.copy(b)) != NANMATH_OK) {
+      return res;
+    }
+    
+    /* 如果x,y都是偶数,那么返回错误 */
+    if (x.iseven() && y.iseven()) {
+      return NANMATH_VAL;
+    }
+    
+    /* u=x, v=y, A=1, B=0, C=0, D=1 */
+    if ((res = u.copy(x)) != NANMATH_OK) {
+      return res;
+    }
+    if ((res = v.copy(y)) != NANMATH_OK) {
+      return res;
+    }
+    A.set(1);
+    D.set(1);
+    
+  top:
+    /* 当 u 是偶数 */
+    while (u.iseven()) {
+      /* u = u/2 */
+      if ((res = u.div_2()) != NANMATH_OK) {
+        return res;
+      }
+      /* 如果A或者B是奇数 */
+      if (A.isodd() || B.isodd()) {
+        /* A = (A+y)/2, B = (B-x)/2 */
+        if ((res = A.add(y)) != NANMATH_OK) {
+          return res;
+        }
+        if ((res = B.sub(x)) != NANMATH_OK) {
+          return res;
+        }
+      }
+      /* A = A/2, B = B/2 */
+      if ((res = A.div_2()) != NANMATH_OK) {
+        return res;
+      }
+      if ((res = B.div_2()) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* 当v是偶数 */
+    while (v.iseven()) {
+      /* v = v/2 */
+      if ((res = v.div_2()) != NANMATH_OK) {
+        return res;
+      }
+      /* 如果 C 或者 D 是奇数 */
+      if (C.isodd() || D.isodd()) {
+        /* C = (C+y)/2, D = (D-x)/2 */
+        if ((res = C.add(y)) != NANMATH_OK) {
+          return res;
+        }
+        if ((res = D.sub(x)) != NANMATH_OK) {
+          return res;
+        }
+      }
+      /* C = C/2, D = D/2 */
+      if ((res = C.div_2()) != NANMATH_OK) {
+        return res;
+      }
+      if ((res = D.div_2()) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* 如果 u >= v */
+    if (u.cmp(v) != NANMATH_LT) {
+      /* u = u - v, A = A - C, B = B - D */
+      if ((res = u.sub(v)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = A.sub(C)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = B.sub(D)) != NANMATH_OK) {
+        return res;
+      }
+    } else {
+      /* v - v - u, C = C - A, D = D - B */
+      if ((res = v.sub(u)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = C.sub(A)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = D.sub(B)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* 如果不是0则跳到top */
+    if (u.iszero() == 0)
+      goto top;
+    
+    /* 现在 a = C, b = D, gcd == g*v */
+    
+    /* 如果 v != 1  无逆 */
+    if (v.cmp_d(1) != NANMATH_EQ) {
+      return NANMATH_VAL;
+    }
+    
+    while (C.cmp_d(0) == NANMATH_LT) {
+      if ((res = C.add(b)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* 太大了 */
+    while (s_cmp_mag(C, b) != NANMATH_LT) {
+      if ((res = C.sub(b)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* C现在是逆 */
+    return c.copy(C);
+  }
+
   
   
   

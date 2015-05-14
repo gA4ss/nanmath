@@ -51,7 +51,7 @@ namespace nanmath {
       if ((res = t1.div_2()) != NANMATH_OK) {
         goto _end;
       }
-    } while (cmp_mag(t1, t2) == NANMATH_GT);
+    } while (s_cmp_mag(t1, t2) == NANMATH_GT);
   
     res = copy(t1);
     
