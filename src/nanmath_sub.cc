@@ -63,15 +63,16 @@ namespace nanmath {
     nanmath_int c;
     
     if (sa != sb) {
+      c.set_sign(sa);
       res = s_add(*this, b, c);
     } else {
       if (s_cmp_mag(*this, b) != NANMATH_LT) {   /* a >= b */
+        c.set_sign(sa);
         res = s_sub(*this, b, c);
       } else {        /* a < b */
         /* 设定结果符号 */
         sc = (sa == NANMATH_ZPOS) ? NANMATH_NEG : NANMATH_ZPOS;
         c.set_sign(sc);
-        
         res = s_sub(b, *this, c);
       }
     }
@@ -115,7 +116,7 @@ namespace nanmath {
     
     /* 处理高位 */
     for (; i < max; i++) {
-      *tmpc -= u;
+      *tmpc = *tmpa++ - u;
       u = *tmpc >> ((nanmath_digit)(CHAR_BIT * sizeof(nanmath_digit) - 1));
       *tmpc++ &= NANMATH_MASK;
     }

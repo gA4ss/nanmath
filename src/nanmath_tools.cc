@@ -126,7 +126,7 @@ namespace nanmath {
     }
 
     if (_used == 0) {
-      zero();
+      zero(1);
     }
   }
   
@@ -143,7 +143,7 @@ namespace nanmath {
   }
   
   void nanmath_int::set(nanmath_digit v) {
-    zero();
+    zero(1);
     _dp[0] = v & NANMATH_MASK;
     clamp();
   }
@@ -157,7 +157,7 @@ namespace nanmath {
     }
     
     /* 清0 */
-    zero();
+    zero(1);
     
     /* 读取符号 */
     if (*str == '-') {
@@ -291,7 +291,7 @@ namespace nanmath {
       return NANMATH_MEM;
     }
     
-    zero();
+    zero(1);
     
     return NANMATH_OK;
   }

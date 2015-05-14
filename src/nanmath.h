@@ -314,7 +314,7 @@ namespace nanmath {
      * 数学辅助
      * nanmath_math.cc
      */
-    virtual void zero();
+    virtual void zero(int s=0);
     virtual int iszero();
     virtual int iseven();
     virtual int isodd();

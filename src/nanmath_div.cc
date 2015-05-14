@@ -22,7 +22,7 @@ namespace nanmath {
   
   int nanmath_int::div_2() {
     if ((_used == 0) || (_alloc == 0) || (_dp == NULL)) {
-      zero();
+      zero(1);
       return NANMATH_OK;
     }
     

@@ -239,6 +239,7 @@ namespace nanmath {
     if ((res = x.mod(a, b)) != NANMATH_OK) {
       return res;
     }
+    
     if ((res = y.copy(b)) != NANMATH_OK) {
       return res;
     }
@@ -252,9 +253,11 @@ namespace nanmath {
     if ((res = u.copy(x)) != NANMATH_OK) {
       return res;
     }
+    
     if ((res = v.copy(y)) != NANMATH_OK) {
       return res;
     }
+    
     A.set(1);
     D.set(1);
     
@@ -265,6 +268,7 @@ namespace nanmath {
       if ((res = u.div_2()) != NANMATH_OK) {
         return res;
       }
+      
       /* 如果A或者B是奇数 */
       if (A.isodd() || B.isodd()) {
         /* A = (A+y)/2, B = (B-x)/2 */
@@ -290,6 +294,7 @@ namespace nanmath {
       if ((res = v.div_2()) != NANMATH_OK) {
         return res;
       }
+      
       /* 如果 C 或者 D 是奇数 */
       if (C.isodd() || D.isodd()) {
         /* C = (C+y)/2, D = (D-x)/2 */
@@ -349,6 +354,7 @@ namespace nanmath {
       return NANMATH_VAL;
     }
     
+    /* 太小了 */
     while (C.cmp_d(0) == NANMATH_LT) {
       if ((res = C.add(b)) != NANMATH_OK) {
         return res;

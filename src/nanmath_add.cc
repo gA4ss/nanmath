@@ -78,12 +78,14 @@ namespace nanmath {
     int sb = b.get_sign();
     
     if (sa == sb) {   /* 符号相同 */
+      c.set_sign(sa);
       res = s_add(*this, b, c);
     } else {
       if (s_cmp_mag(*this, b) == NANMATH_LT) { /* a < b */
-        _sign = sb;
+        c.set_sign(sb);
         res = s_sub(b, *this, c);       /* b - a */
       } else {                          /* a >= b */
+        c.set_sign(sa);
         res = s_sub(*this, b, c);       /* a - b */
       }
     }/* end if */

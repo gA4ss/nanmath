@@ -3,8 +3,9 @@
 namespace nanmath {
   
   /* 清0 */
-  void nanmath_int::zero() {
-    _sign = NANMATH_ZPOS;
+  void nanmath_int::zero(int s) {
+    if (s) _sign = NANMATH_ZPOS;
+    
     _used = 1;
     
     nanmath_digit *tmp = _dp;
