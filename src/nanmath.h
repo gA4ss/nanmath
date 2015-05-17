@@ -249,7 +249,7 @@ namespace nanmath {
     virtual int div_2();
     virtual int div_d(nanmath_digit v, nanmath_digit *r=NULL);
     virtual int div(nanmath_int &v, nanmath_int &r=nnull);
-    virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int& r);
+    virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int &r=nnull);
     
     /*
      * 取模单元
@@ -261,9 +261,22 @@ namespace nanmath {
     virtual int mod(nanmath_int &a, nanmath_int &b);
     virtual int addmod(nanmath_int &b, nanmath_int &c);
     virtual int addmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    virtual int submod(nanmath_int &b, nanmath_int &c);
+    virtual int submod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    virtual int sqrmod(nanmath_int &b);
+    virtual int sqrmod(nanmath_int &a, nanmath_int &b);
+    virtual int mulmod(nanmath_int &b, nanmath_int &c);
+    virtual int mulmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     virtual int invmod(nanmath_int &b);
     virtual int invmod(nanmath_int &a, nanmath_int &b);
-    //virtual int exptmod(nanmath_int G, mp_int * X, mp_int * P, mp_int * Y);
+    virtual int exptmod(nanmath_int &b, nanmath_int &c);
+    virtual int exptmod(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    
+    /*
+     * 分解单元
+     * nanmath_reduce.cc
+     */
+    int reduce(nanmath_int &x, nanmath_int &m, nanmath_int &mu);
     
     /*
      * 逻辑运算
@@ -278,7 +291,8 @@ namespace nanmath {
     virtual int and_v(nanmath_int &b);
     virtual int or_d(nanmath_digit d);
     virtual int or_v(nanmath_int &b);
-    //virtual int not(nanmath_int &b);
+    virtual int xor_d(nanmath_digit d);
+    virtual int xor_v(nanmath_int &b);
     
     /*
      * 指数运算
@@ -345,6 +359,16 @@ namespace nanmath {
     
     static int s_invmod_fast(nanmath_int &a, nanmath_int &b, nanmath_int &c);
     static int s_invmod_slow(nanmath_int &a, nanmath_int &b, nanmath_int &c);
+    
+    static int s_exptmod(nanmath_int &G, nanmath_int &X, nanmath_int &P, nanmath_int &Y, int redmode=0);
+    
+    /* reduce */
+    static int s_reduce_setup(nanmath_int &a, nanmath_int &b);
+    static int s_reduce_2k_setup(nanmath_int &a, nanmath_digit *d);
+    static int s_reduce_2k_setup_l(nanmath_int &a, nanmath_int &d);
+    static int s_reduce_is_2k(nanmath_int &a);
+    static int s_reduce_is_2k_l(nanmath_int &a);
+    static int s_reduce(nanmath_int &a, nanmath_int &b, nanmath_int &c, int redmode=0);
     
     /*
      * 数据定义区域

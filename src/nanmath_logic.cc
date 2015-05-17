@@ -210,7 +210,7 @@ namespace nanmath {
       return NANMATH_OK;
     }
     
-    _dp[0] &= d;
+    _dp[0] &= (d & NANMATH_MASK);
     
     return NANMATH_OK;
   }
@@ -251,7 +251,7 @@ namespace nanmath {
       return NANMATH_OK;
     }
     
-    _dp[0] |= d;
+    _dp[0] |= (d & NANMATH_MASK);
     
     return NANMATH_OK;
   }
@@ -286,6 +286,43 @@ namespace nanmath {
     t.clamp();
     return copy(t);
   }
+  
+  int nanmath_int::xor_d(nanmath_digit d) {
+    if (iszero()) {
+      return NANMATH_OK;
+    }
+    
+    _dp[0] ^= (d & NANMATH_MASK);
+    
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::xor_v(nanmath_int &b) {
+    int res, px;
+    nanmath_int t, *x;
+    
+    if (_used > b.get_used()) {
+      if ((res = t.copy(*this)) != NANMATH_OK) {
+        return res;
+      }
+      px = b.get_used();
+      x = &b;
+    } else {
+      if ((res = t.copy(b)) != NANMATH_OK) {
+        return res;
+      }
+      px = _used;
+      x = this;
+    }
+    
+    for (int ix = 0; ix < px; ix++) {
+      nanmath_digit d = t.getv(ix) ^ x->getv(ix);
+      t.setv(ix, d);
+    }
+    t.clamp();
+    return copy(t);
+  }
+  
 }
 
 
