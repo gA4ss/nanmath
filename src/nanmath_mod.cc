@@ -2,6 +2,7 @@
 
 namespace nanmath {
   
+  /* 模 2^v */
   int nanmath_int::mod_2x(nanmath_digit v) {
     /* 如果 v <= 0 然后清空结果 */
     if (v <= 0) {
@@ -28,10 +29,12 @@ namespace nanmath {
     return NANMATH_OK;
   }
   
+  /* 除以 v，商保存到类，余数放到r中 */
   int nanmath_int::mod_d(nanmath_digit v, nanmath_digit *r) {
     return div_d(v, r);
   }
   
+  /* 模v，余数放到类中 */
   int nanmath_int::mod(nanmath_int &v) {
     nanmath_int r;
     int res;
@@ -53,6 +56,7 @@ namespace nanmath {
     return res;
   }
   
+  /* b = a % b */
   int nanmath_int::mod(nanmath_int &a, nanmath_int &b) {
     int res;
     if ((res = copy(a)) != NANMATH_OK)
@@ -452,12 +456,11 @@ namespace nanmath {
       return res;
     }
     
+    /* Y = G^X mod P */
     /* modified diminished radix reduction */
-#if defined(BN_MP_REDUCE_IS_2K_L_C) && defined(BN_MP_REDUCE_2K_L_C) && defined(BN_S_MP_EXPTMOD_C)
-    if (mp_reduce_is_2k_l(P) == MP_YES) {
-      return s_mp_exptmod(G, X, P, Y, 1);
+    if (s_reduce_is_2k_l(*this) == NANMATH_YES) {
+      return s_exptmod(*this, b, c, Y, 1);
     }
-#endif
     
 #ifdef BN_MP_DR_IS_MODULUS_C
     /* is it a DR modulus? */
@@ -506,7 +509,7 @@ namespace nanmath {
     nanmath_int M[TAB_SIZE], res, mu;
     nanmath_digit buf;
     int err, bitbuf, bitcpy, bitcnt, mode, digidx, x, y, winsize;
-  
+    
     /* 窗口长度 */
     x = X.count_bits();
     if (x <= 7) {
@@ -562,7 +565,7 @@ namespace nanmath {
       }
       
       /* 分解模P */
-      if ((err = redux(M[1 << (winsize - 1)], P, mu)) != NANMATH_OK) {
+      if ((err = s_reduce(M[1 << (winsize - 1)], P, mu, redmode)) != NANMATH_OK) {
         return err;
       }
     }
@@ -574,115 +577,109 @@ namespace nanmath {
       if ((err = M[x].mul(M[x - 1], M[1])) != NANMATH_OK) {
         return err;
       }
-      if ((err = redux(M[x], P, mu)) != NANMATH_OK) {
+      if ((err = s_reduce(M[x], P, mu, redmode)) != NANMATH_OK) {
         return err;
       }
     }
     
-    /* setup result */
-    if ((err = mp_init (&res)) != MP_OKAY) {
-      goto LBL_MU;
-    }
-    mp_set (&res, 1);
+    /* 设置结果 */
+    res.set(1);
     
-    /* set initial mode and bit cnt */
-    mode   = 0;
+    /* 初始化并且设置位 */
+    mode = 0;
     bitcnt = 1;
-    buf    = 0;
-    digidx = X->used - 1;
+    buf = 0;
+    digidx = X.get_used() - 1;
     bitcpy = 0;
     bitbuf = 0;
     
     for (;;) {
       /* grab next digit as required */
       if (--bitcnt == 0) {
-        /* if digidx == -1 we are out of digits */
+        /* 超出界限 */
         if (digidx == -1) {
           break;
         }
-        /* read next digit and reset the bitcnt */
-        buf    = X->dp[digidx--];
+        /* 读取下一位并且重新设置位计数 */
+        buf = X.getv(digidx--);
         bitcnt = (int) DIGIT_BIT;
       }
       
-      /* grab the next msb from the exponent */
-      y     = (buf >> (mp_digit)(DIGIT_BIT - 1)) & 1;
-      buf <<= (mp_digit)1;
+      /* 从指数获取下一个msb */
+      y = (buf >> cast_f(nanmath_digit, (DIGIT_BIT - 1)) & 1);
+      buf <<= cast_f(nanmath_digit, 1);
       
-      /* if the bit is zero and mode == 0 then we ignore it
-       * These represent the leading zero bits before the first 1 bit
-       * in the exponent.  Technically this opt is not required but it
-       * does lower the # of trivial squaring/reductions used
+      /* 如果位是0并且模等于0然后我们忽略它
+       * 在指数的第一位之前呈现的0位.
        */
       if (mode == 0 && y == 0) {
         continue;
       }
       
-      /* if the bit is zero and mode == 1 then we square */
-      if (mode == 1 && y == 0) {
-        if ((err = mp_sqr (&res, &res)) != MP_OKAY) {
-          goto LBL_RES;
+      /* 如果位是0并且mode是1然后我们平方它 */
+      if ((mode == 1) && (y == 0)) {
+        if ((err = res.sqr()) != NANMATH_OK) {
+          return err;
         }
-        if ((err = redux (&res, P, &mu)) != MP_OKAY) {
-          goto LBL_RES;
+        if ((err = s_reduce(res, P, mu, redmode)) != NANMATH_OK) {
+          return err;
         }
         continue;
       }
       
-      /* else we add it to the window */
+      /* 然后我们把它到windows上 */
       bitbuf |= (y << (winsize - ++bitcpy));
-      mode    = 2;
+      mode = 2;
       
       if (bitcpy == winsize) {
-        /* ok window is filled so square as required and multiply  */
-        /* square first */
+        /* 窗口被填满 */
         for (x = 0; x < winsize; x++) {
-          if ((err = mp_sqr (&res, &res)) != MP_OKAY) {
-            goto LBL_RES;
+          if ((err = res.sqr()) != NANMATH_OK) {
+            return err;
           }
-          if ((err = redux (&res, P, &mu)) != MP_OKAY) {
-            goto LBL_RES;
+          if ((err = s_reduce(res, P, mu, redmode)) != NANMATH_OK) {
+            return err;
           }
         }
         
-        /* then multiply */
-        if ((err = mp_mul (&res, &M[bitbuf], &res)) != MP_OKAY) {
-          goto LBL_RES;
+        /* 相乘 */
+        if ((err = res.mul(M[bitbuf])) != NANMATH_OK) {
+          return err;
         }
-        if ((err = redux (&res, P, &mu)) != MP_OKAY) {
-          goto LBL_RES;
+        if ((err = s_reduce(res, P, mu, redmode)) != NANMATH_OK) {
+          return err;
         }
         
-        /* empty window and reset */
+        /* 清空windows并且重设 */
         bitcpy = 0;
         bitbuf = 0;
-        mode   = 1;
+        mode = 1;
       }
     }
     
-    /* if bits remain then square/multiply */
-    if (mode == 2 && bitcpy > 0) {
-      /* square then multiply if the bit is set */
+    /* 如果存在位剩余然后平方/相乘 */
+    if ((mode == 2) && (bitcpy > 0)) {
+      /* 如果位被设置则平方然后相乘 */
       for (x = 0; x < bitcpy; x++) {
-        if ((err = mp_sqr (&res, &res)) != MP_OKAY) {
-          goto LBL_RES;
+        if ((err = res.sqr()) != NANMATH_OK) {
+          return err;
         }
-        if ((err = redux (&res, P, &mu)) != MP_OKAY) {
-          goto LBL_RES;
+        if ((err = s_reduce(res, P, mu, redmode)) != NANMATH_OK) {
+          return err;
         }
         
         bitbuf <<= 1;
         if ((bitbuf & (1 << winsize)) != 0) {
-          /* then multiply */
-          if ((err = mp_mul (&res, &M[1], &res)) != MP_OKAY) {
-            goto LBL_RES;
+          /* 相乘 */
+          if ((err = res.mul(M[1])) != NANMATH_OK) {
+            return err;
           }
-          if ((err = redux (&res, P, &mu)) != MP_OKAY) {
-            goto LBL_RES;
+          if ((err = s_reduce(res, P, mu)) != NANMATH_OK) {
+            return err;
           }
-        }
-      }
-    }
+        }/* end for */
+      }/* end if */
+    }/* end if */
     
     /* 复制结果 */
     err = Y.copy(res);

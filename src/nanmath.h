@@ -120,15 +120,15 @@ namespace nanmath {
   
   typedef unsigned long       nanmath_digit;
   typedef ulong64             nanmath_word;
-#define DIGIT_BIT           28              /* 相当于一个2^28进制的数 */
+#define DIGIT_BIT             28              /* 相当于一个2^28进制的数 */
 #else
   /* 64位 */
   typedef unsigned long       nanmath_digit;
   typedef unsigned long       nanmath_word __attribute__ ((mode(TI)));   /* 128位 */
-#define DIGIT_BIT           60              /* 相当于一个2^60进制的数 */
+#define DIGIT_BIT             60              /* 相当于一个2^60进制的数 */
 #endif
   
-  typedef nanmath_word         nanmath_size;
+  typedef nanmath_word        nanmath_size;
   
   /* 一个空值 */
   class nanmath_int;
@@ -196,6 +196,8 @@ namespace nanmath {
     virtual void spread();                                /* 保证值对应位 */
     virtual void set(nanmath_digit v);                    /* 设置单精度位 */
     virtual int set_s(const char *str, int radix=10);     /* 按照radix给定的基,来设定数字 */
+    virtual int set_b(const unsigned char *b, int c);     /* 读取bin中的数字 */
+    virtual int set_sb(const unsigned char *b, int c);    /* 读取bin中的数字,带符号 */
     virtual int copy(nanmath_int &d);                     /* 从d中拷贝到自身中 */
     virtual int paste(nanmath_int &d);                    /* 将自身的值黏贴到d中 */
     virtual int grow(nanmath_size size);                  /* 重新分配内存到size */
@@ -206,6 +208,18 @@ namespace nanmath {
     virtual void clear();                                 /* 清除内存 */
     virtual int testnull();                               /* 测试是否为空 */
     virtual unsigned long get_int();                      /* 获取nanmath_int的低32位整数 */
+    virtual int rand(nanmath_int v, int digits);          /* 获取一个digits个位的随机数 */
+    
+    
+    /*
+     * 字节序保存
+     */
+    virtual int to_big_byte_order(unsigned char *b);
+    virtual int to_big_byte_order_n(unsigned char *b, int *outlen);
+    virtual int to_big_signed_byte_order(unsigned char *b);
+    virtual int to_big_signed_byte_order_n(unsigned char *b, int *outlen);
+    virtual int get_big_unsigned_size();
+    virtual int get_big_signed_size();
     
   protected:
     void reverse_mem(unsigned char *s, int len);
@@ -238,6 +252,7 @@ namespace nanmath {
      * nanmath_mul.cc
      */
     virtual int mul_2();
+    virtual int mul_2x(nanmath_digit b);
     virtual int mul_d(nanmath_digit b);
     virtual int mul(nanmath_int &b);
     virtual int mul(nanmath_int &a, nanmath_int &b);
@@ -247,6 +262,7 @@ namespace nanmath {
      * nanmath_div.cc
      */
     virtual int div_2();
+    virtual int div_2x(nanmath_digit b, nanmath_int &r=nnull);
     virtual int div_d(nanmath_digit v, nanmath_digit *r=NULL);
     virtual int div(nanmath_int &v, nanmath_int &r=nnull);
     virtual int div(nanmath_int &a, nanmath_int &b, nanmath_int &r=nnull);
@@ -276,7 +292,9 @@ namespace nanmath {
      * 分解单元
      * nanmath_reduce.cc
      */
-    int reduce(nanmath_int &x, nanmath_int &m, nanmath_int &mu);
+    int reduce(nanmath_int &m, nanmath_int &mu);
+    int reduce_2k(nanmath_int &n, nanmath_digit d);
+    int reduce_2k_l(nanmath_int &n, nanmath_int &d);
     
     /*
      * 逻辑运算
@@ -334,6 +352,8 @@ namespace nanmath {
     virtual int isodd();
     virtual int abs();
     virtual int neg(nanmath_int &b);
+    virtual int is_square(nanmath_int &v, int &ret);
+    
     
     /*
      * 一些支持运算的底层算法

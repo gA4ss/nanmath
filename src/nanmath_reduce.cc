@@ -46,74 +46,6 @@ namespace nanmath {
     return res;
   }
   
-  int nanmath_int::s_reduce(nanmath_int &a, nanmath_int &b, nanmath_int &c, int redmode) {
-    if (redmode == 0) return reduce(a, b, c);
-    //else return ;
-    return NANMATH_OK;
-  }
-  
-  /* Barrett reduction算法
-   * 分解x mod m, 指定 0 < x < m^2, mu是通过 reduce_setup预计算得到 */
-  int nanmath_int::reduce(nanmath_int &x, nanmath_int &m, nanmath_int &mu) {
-    nanmath_int q;
-    int res, um = m.get_used();
-  
-    /* q = x */
-    if ((res = q.copy(x)) != NANMATH_OK) {
-      return res;
-    }
-  
-    /* q1 = x / b^(k-1)  */
-    q.rsh_d(um - 1);
-  
-    if (((unsigned long)um) > (((nanmath_digit)1) << (DIGIT_BIT - 1))) {
-      if ((res = q.mul(mu)) != NANMATH_OK) {
-        return res;
-      }
-    } else {
-      if ((res = s_mul_high_digs_(q, mu, q, um)) != NANMATH_OK) {
-        return res;
-      }
-    }
-  
-    /* q3 = q2 / b^(k+1) */
-    q.rsh_d(um + 1);
-  
-    /* x = x mod b^(k+1), quick (no division) */
-    if ((res = x.mod_2x(DIGIT_BIT * (um + 1))) != NANMATH_OK) {
-      return res;
-    }
-  
-    /* q = q * m mod b**(k+1), quick (no division) */
-    if ((res = s_mul_high_digs_(q, m, q, um + 1)) != NANMATH_OK) {
-      return res;
-    }
-  
-    /* x = x - q */
-    if ((res = x.sub(q)) != NANMATH_OK) {
-      return res;
-    }
-  
-    /* 如果 x < 0, 加上 b^(k+1) 到 x */
-    if (x.cmp_d(0) == NANMATH_LT) {
-      q.set(1);
-      
-      if ((res = q.lsh_d(um + 1)) != NANMATH_OK)
-        return res;
-      if ((res = x.add(q)) != NANMATH_OK)
-        return res;
-    }
-  
-    /* 如果太大则后退 */
-    while (x.cmp(m) != NANMATH_LT) {
-      if ((res = s_sub(x, m, x)) != NANMATH_OK) {
-        return res;
-      }
-    }/* end while */
-  
-    return res;
-  }
-  
   int nanmath_int::s_reduce_is_2k(nanmath_int &a) {
     int ix, iy, iw;
     nanmath_digit iz;
@@ -149,7 +81,7 @@ namespace nanmath {
       return NANMATH_NO;
     } else if (a.get_used() == 1) {
       return NANMATH_YES;
-    } else if (a.get_used() > 1) {
+    } else if (a.get_used() > 1) {
       for (iy = ix = 0; ix < a.get_used(); ix++) {
         if (a.getv(ix) == NANMATH_MASK) {
           ++iy;
@@ -160,4 +92,142 @@ namespace nanmath {
     return NANMATH_NO;
   }
   
+  /* redmode:
+   * 0: reduce
+   * else: reduce_2k_l
+   */
+  int nanmath_int::s_reduce(nanmath_int &a, nanmath_int &b, nanmath_int &c, int redmode) {
+    if (redmode == 0) return a.reduce(b, c);
+    else return a.reduce_2k_l(b, c);
+    return NANMATH_OK;
+  }
+  
+  /* Barrett reduction算法
+   * 分解x mod m, 指定 0 < x < m^2, mu是通过reduce_setup预计算得到 */
+  int nanmath_int::reduce(nanmath_int &m, nanmath_int &mu) {
+    nanmath_int q;
+    int res, um = m.get_used();     /* 获取位数 */
+  
+    /* q = x */
+    if ((res = q.copy(*this)) != NANMATH_OK) {
+      return res;
+    }
+  
+    /* q1 = x / b^(k-1)  */
+    q.rsh_d(um - 1);
+    
+    if (((unsigned long)um) > (((nanmath_digit)1) << (DIGIT_BIT - 1))) {
+      if ((res = q.mul(mu)) != NANMATH_OK) {
+        return res;
+      }
+    } else {
+      if ((res = s_mul_high_digs_(q, mu, q, um)) != NANMATH_OK) {
+        return res;
+      }
+    }
+  
+    /* q3 = q2 / b^(k+1) */
+    q.rsh_d(um + 1);
+  
+    /* x = x mod b^(k+1), quick (no division) */
+    if ((res = mod_2x(DIGIT_BIT * (um + 1))) != NANMATH_OK) {
+      return res;
+    }
+  
+    /* q = q * m mod b**(k+1), quick (no division) */
+    if ((res = s_mul_high_digs_(q, m, q, um + 1)) != NANMATH_OK) {
+      return res;
+    }
+  
+    /* x = x - q */
+    if ((res = sub(q)) != NANMATH_OK) {
+      return res;
+    }
+  
+    /* 如果 x < 0, 加上 b^(k+1) 到 x */
+    if (cmp_d(0) == NANMATH_LT) {
+      q.set(1);
+      
+      if ((res = q.lsh_d(um + 1)) != NANMATH_OK)
+        return res;
+      if ((res = add(q)) != NANMATH_OK)
+        return res;
+    }
+  
+    /* 如果太大则后退 */
+    while (cmp(m) != NANMATH_LT) {
+      if ((res = s_sub(*this, m, *this)) != NANMATH_OK) {
+        return res;
+      }
+    }/* end while */
+  
+    return res;
+  }
+  
+  /* 分解 a 模 n, 其中 n 是通过 2^p - d 得来 */
+  int nanmath_int::reduce_2k(nanmath_int &n, nanmath_digit d) {
+    nanmath_int q;
+    int p, res;
+    
+    p = n.count_bits();
+    
+  top:
+    /* q = a/2^p, a = a mod 2^p */
+    if ((res = div_2x(p, q)) != NANMATH_OK) {
+      return res;
+    }
+    
+    if (d != 1) {
+      /* q = q * d */
+      if ((res = q.mul_d(d)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* a = a + q */
+    if ((res = s_add(*this, q, *this)) != NANMATH_OK) {
+      return res;
+    }
+    
+    if (s_cmp_mag(*this, n) != NANMATH_LT) {
+      if ((res = s_sub(*this, n, *this) != NANMATH_OK)) {
+        return res;
+      }
+      goto top;
+    }
+    return res;
+  }
+  
+  /* 分解 a 模 n, n是一个2^p -d 的数
+   * 与 reduce_2k不同的是 d 是大于一个精度位的数
+   */
+  int nanmath_int::reduce_2k_l(nanmath_int &n, nanmath_int &d) {
+    nanmath_int q;
+    int p, res;
+    
+    p = n.count_bits();
+  top:
+    /* q = a/2^p, a = a mod 2^p */
+    if ((res = div_2x(p, q)) != NANMATH_OK) {
+      return res;
+    }
+    
+    /* q = q * d */
+    if ((res = q.mul(d)) != NANMATH_OK) {
+      return res;
+    }
+    
+    /* a = a + q */
+    if ((res = s_add(*this, q, *this)) != NANMATH_OK) {
+      return res;
+    }
+    
+    if (s_cmp_mag(*this, n) != NANMATH_LT) {
+      if ((res = s_sub(*this, n, *this)) != NANMATH_OK) {
+        return res;
+      }
+      goto top;
+    }
+    return res;
+  }
 }

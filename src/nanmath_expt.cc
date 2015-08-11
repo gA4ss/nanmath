@@ -2,6 +2,7 @@
 
 namespace nanmath {
 
+  /* a = a ^ b */
   int nanmath_int::expt_d(nanmath_digit b) {
     int res;
     nanmath_int c;
@@ -34,6 +35,7 @@ namespace nanmath {
     return res;
   }
 
+  /* a = 2 ^ b */
   int nanmath_int::bin_expt(int b) {
     int res;
     

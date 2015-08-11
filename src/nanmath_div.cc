@@ -40,6 +40,34 @@ namespace nanmath {
     return NANMATH_OK;
   }
   
+  int nanmath_int::div_2x(nanmath_digit b, nanmath_int &r) {
+    int res;
+    
+    /* 如果b小于等于0则退出 */
+    if (b <= 0) {
+      if (r.testnull() == 0) {
+        r.zero();
+      }
+      return NANMATH_OK;
+    }
+    
+    /* 获取余数 */
+    if (r.testnull() == 0) {
+      if ((res = r.copy(*this)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = r.mod_2x(b)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    /* 求商 */
+    res = rsh(b);
+    
+    return res;
+  }
+  
   int nanmath_int::div_d(nanmath_digit v, nanmath_digit *r) {
     int res;
     /* 除数不能为0 */

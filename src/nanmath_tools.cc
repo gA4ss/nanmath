@@ -1,4 +1,5 @@
 #include "nanmath.h"
+#include <stdlib.h>
 #include <string.h>
 
 namespace nanmath {
@@ -394,6 +395,84 @@ namespace nanmath {
     }
     
     return res & 0xFFFFFFFFUL;
+  }
+  
+  int nanmath_int::rand(nanmath_int v, int digits) {
+    int res;
+    nanmath_digit d;
+    
+    zero();
+    
+    if (digits <= 0) {
+      return NANMATH_OK;
+    }
+    
+    do {
+      d = cast_f(nanmath_digit, ::abs(::rand()) & NANMATH_MASK);
+    } while (d == 0);
+    
+    /* 加上一个随机数 */
+    if ((res = add_d(d)) != NANMATH_OK) {
+      return res;
+    }
+    
+    /* 循环 */
+    while (--digits > 0) {
+      /* 左移1位 */
+      if ((res = lsh_d(1)) != NANMATH_OK) {
+        return res;
+      }
+      
+      if ((res = add_d((cast_f(nanmath_digit, ::abs(::rand()))))) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::set_b(const unsigned char *b, int c) {
+    int res;
+    
+    nanmath_assert(b);
+    
+    if (_alloc < 2) {
+      if ((res = grow(2)) != NANMATH_OK) {
+        return res;
+      }
+    }
+    
+    zero();
+    
+    while (c-- > 0) {
+      if ((res = mul_2x(8)) != NANMATH_OK) {
+        return res;
+      }
+      
+      _dp[0] |= *b++;
+      _used++;
+    }
+    clamp();
+    
+    return NANMATH_OK;
+  }
+  
+  int nanmath_int::set_sb(const unsigned char *b, int c) {
+    int res;
+    
+    nanmath_assert(b);
+    
+    if ((res = set_b(b + 1, c - 1)) != NANMATH_OK) {
+      return res;
+    }
+    
+    if (b[0] == 0) {
+      _sign = NANMATH_ZPOS;
+    } else {
+      _sign = NANMATH_NEG;
+    }
+    
+    return NANMATH_OK;
   }
   
 }

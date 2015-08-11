@@ -38,6 +38,10 @@ namespace nanmath {
     return NANMATH_OK;
   }
   
+  int nanmath_int::mul_2x(nanmath_digit b) {
+    return lsh(b);
+  }
+  
   /* 乘以一个单精度位 */
   int nanmath_int::mul_d(nanmath_digit b) {
     int res;
